@@ -1,0 +1,107 @@
+2026-03-10 15:50:34 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 15:53:19 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 15:53:22 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 15:53:40 [INFO] stock_widget_ai.gui.main: 설정 저장 완료 — 1400×900 @ (75,145)
+2026-03-10 16:29:38 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 16:29:41 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 16:31:08 [INFO] stock_widget_ai.controller: 데이터 로드: 064350.KS (5y/1d)
+2026-03-10 16:31:11 [INFO] stock_widget_ai.data.loader: 다운로드: 064350.KS 2021-03-10~2026-03-10 (1222행)
+2026-03-10 16:31:11 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:31:11 [INFO] stock_widget_ai.data.loader: 다운로드: ^GSPC 2021-03-10~2026-03-09 (1255행)
+2026-03-10 16:31:11 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:31:11 [INFO] stock_widget_ai.data.service: fetch 완료: 064350.KS 1222행
+2026-03-10 16:31:11 [INFO] stock_widget_ai.controller: 완료: 1222행 로드
+2026-03-10 16:31:15 [ERROR] stock_widget_ai.gui.main: [예측] RuntimeError: 먼저 학습하거나 모델을 불러오세요
+Traceback (most recent call last):
+  File "D:\git_akadora_cc\ai_dev_xia\stock_widget_ai\stock_widget_ai\gui\worker_threads.py", line 25, in run
+    result = self._fn(*self._args, **self._kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\git_akadora_cc\ai_dev_xia\stock_widget_ai\stock_widget_ai\gui\main_window.py", line 205, in _pred
+    return self._ctrl.predict()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "D:\git_akadora_cc\ai_dev_xia\stock_widget_ai\stock_widget_ai\app_controller.py", line 192, in predict
+    raise RuntimeError("먼저 학습하거나 모델을 불러오세요")
+RuntimeError: 먼저 학습하거나 모델을 불러오세요
+
+2026-03-10 16:31:22 [INFO] stock_widget_ai.controller: 피처 생성 중...
+2026-03-10 16:31:22 [INFO] stock_widget_ai.features.engineering: features: 29개, samples: 1158
+2026-03-10 16:31:22 [INFO] stock_widget_ai.controller: 피처 29개, 샘플 1158개
+2026-03-10 16:31:22 [INFO] stock_widget_ai.utils: GPU 감지: NVIDIA GeForce RTX 2070
+2026-03-10 16:31:22 [INFO] stock_widget_ai.ml.experiment: 실험 시작: outputs\experiments\20260310_163122_064350.KS_transformer
+2026-03-10 16:47:39 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 16:47:41 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 16:48:04 [INFO] stock_widget_ai.controller: 데이터 로드: 064350.KS (5y/1d)
+2026-03-10 16:48:06 [INFO] stock_widget_ai.data.loader: 다운로드: 064350.KS 2021-03-10~2026-03-10 (1222행)
+2026-03-10 16:48:06 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:48:06 [INFO] stock_widget_ai.data.loader: 다운로드: ^GSPC 2021-03-10~2026-03-09 (1255행)
+2026-03-10 16:48:06 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:48:06 [INFO] stock_widget_ai.data.service: fetch 완료: 064350.KS 1222행
+2026-03-10 16:48:06 [INFO] stock_widget_ai.controller: 완료: 1222행 로드
+2026-03-10 16:48:06 [INFO] stock_widget_ai.gui.main: 설정 저장 완료 — 1400×900 @ (75,139)
+2026-03-10 16:49:02 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 16:49:03 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 16:50:00 [INFO] stock_widget_ai.gui.main: 설정 저장 완료 — 1400×900 @ (75,139)
+2026-03-10 16:55:31 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 16:55:33 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 16:55:44 [INFO] stock_widget_ai.controller: 데이터 로드: 064350.KS (5y/1d)
+2026-03-10 16:55:46 [INFO] stock_widget_ai.data.loader: 다운로드: 064350.KS 2021-03-10~2026-03-10 (1222행)
+2026-03-10 16:55:46 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:55:46 [INFO] stock_widget_ai.data.loader: 다운로드: ^GSPC 2021-03-10~2026-03-09 (1255행)
+2026-03-10 16:55:46 [WARNING] stock_widget_ai.data.loader: 캐시 저장 실패: Unable to find a usable engine; tried using: 'pyarrow', 'fastparquet'.
+A suitable version of pyarrow or fastparquet is required for parquet support.
+Trying to import the above resulted in these errors:
+ - Missing optional dependency 'pyarrow'. pyarrow is required for parquet support. Use pip or conda to install pyarrow.
+ - Missing optional dependency 'fastparquet'. fastparquet is required for parquet support. Use pip or conda to install fastparquet.
+2026-03-10 16:55:46 [INFO] stock_widget_ai.data.service: fetch 완료: 064350.KS 1222행
+2026-03-10 16:55:46 [INFO] stock_widget_ai.controller: 완료: 1222행 로드
+2026-03-10 16:55:51 [INFO] stock_widget_ai.controller: 피처 생성 중...
+2026-03-10 16:55:51 [INFO] stock_widget_ai.features.engineering: features: 29개, samples: 1158
+2026-03-10 16:55:51 [INFO] stock_widget_ai.controller: 피처 29개, 샘플 1158개
+2026-03-10 16:55:51 [INFO] stock_widget_ai.utils: GPU 감지: NVIDIA GeForce RTX 2070
+2026-03-10 16:55:51 [INFO] stock_widget_ai.ml.experiment: 실험 시작: outputs\experiments\20260310_165551_064350.KS_transformer
+2026-03-10 17:03:18 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 17:03:19 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 17:03:33 [INFO] stock_widget_ai.controller: 데이터 로드: 064350.KS (5y/1d)
+2026-03-10 17:03:35 [INFO] stock_widget_ai.data.loader: 다운로드: 064350.KS 2021-03-10~2026-03-10 (1222행)
+2026-03-10 17:03:35 [INFO] stock_widget_ai.data.loader: 캐시 저장 (CSV fallback): 064350.KS_5y_1d.csv
+2026-03-10 17:03:35 [INFO] stock_widget_ai.data.loader: 다운로드: ^GSPC 2021-03-10~2026-03-09 (1255행)
+2026-03-10 17:03:35 [INFO] stock_widget_ai.data.loader: 캐시 저장 (CSV fallback): IDX_GSPC_5y_1d.csv
+2026-03-10 17:03:35 [INFO] stock_widget_ai.data.service: fetch 완료: 064350.KS 1222행
+2026-03-10 17:03:35 [INFO] stock_widget_ai.controller: 완료: 1222행 로드
+2026-03-10 17:03:40 [INFO] stock_widget_ai.controller: 피처 생성 중...
+2026-03-10 17:03:40 [INFO] stock_widget_ai.features.engineering: features: 29개, samples: 1158
+2026-03-10 17:03:40 [INFO] stock_widget_ai.controller: 피처 29개, 샘플 1158개
+2026-03-10 17:03:40 [INFO] stock_widget_ai.utils: GPU 감지: NVIDIA GeForce RTX 2070
+2026-03-10 17:03:40 [INFO] stock_widget_ai.ml.experiment: 실험 시작: outputs\experiments\20260310_170340_064350.KS_transformer
+2026-03-10 17:12:37 [INFO] stock_widget_ai: Logging initialized — level=INFO, file=logs\app.log
+2026-03-10 17:12:38 [INFO] stock_widget_ai.gui.main: MainWindow 초기화 완료
+2026-03-10 17:12:47 [INFO] stock_widget_ai.controller: 데이터 로드: 064350.KS (5y/1d)
+2026-03-10 17:12:47 [INFO] stock_widget_ai.data.loader: 캐시 로드: 064350.KS (1222행)  [064350.KS_5y_1d.csv]
+2026-03-10 17:12:47 [INFO] stock_widget_ai.data.loader: 캐시 로드: ^GSPC (1255행)  [IDX_GSPC_5y_1d.csv]
+2026-03-10 17:12:47 [INFO] stock_widget_ai.data.service: fetch 완료: 064350.KS 1222행
+2026-03-10 17:12:47 [INFO] stock_widget_ai.controller: 완료: 1222행 로드
+2026-03-10 17:12:53 [INFO] stock_widget_ai.controller: 피처 생성 중...
+2026-03-10 17:12:53 [INFO] stock_widget_ai.features.engineering: features: 29개, samples: 1158
+2026-03-10 17:12:53 [INFO] stock_widget_ai.controller: 피처 29개, 샘플 1158개
+2026-03-10 17:12:53 [INFO] stock_widget_ai.utils: GPU 감지: NVIDIA GeForce RTX 2070
+2026-03-10 17:12:53 [INFO] stock_widget_ai.ml.experiment: 실험 시작: outputs\experiments\20260310_171253_064350.KS_transformer

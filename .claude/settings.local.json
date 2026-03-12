@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python -c \":*)",
+      "Bash(C:/Users/HS1/anaconda3/envs/ai_dev/python.exe -c \":*)",
+      "Bash(find D:/git_akadora_cc/ai_dev_xia/stock_widget_ai -name \"__pycache__\" -type d -exec rm -rf {} +)",
+      "Bash(conda run -n ai_dev python -c \"import sys; sys.path.insert\\(0,''stock_widget_ai''\\); from main import main; print\\(''main import OK''\\)\")",
+      "Bash(pip install PyQt6)",
+      "Bash(python -c \"import warnings; warnings.filterwarnings\\(''ignore''\\); import sys; sys.path.insert\\(0, ''.''\\); import matplotlib; matplotlib.use\\(''Agg''\\); from stock_widget_ai.gui import chart_widget as cw; print\\(''[OK] font.family ='', matplotlib.rcParams.get\\(''font.family''\\)\\); print\\(''[OK] unicode_minus ='', matplotlib.rcParams.get\\(''axes.unicode_minus''\\)\\); import torch; from stock_widget_ai.ml.models.transformer_model import TransformerModel; m = TransformerModel\\(n_features=10\\); print\\(''[OK] encoder.enable_nested_tensor ='', m.encoder.enable_nested_tensor\\); from stock_widget_ai.data.data_loader import DataLoader as DL; dl = DL\\(cache_dir=''test_tmp''\\); print\\(''[OK] parquet path ='', dl._cache_path\\(''X'',''5y'',''1d'',''parquet''\\)\\); print\\(''[OK] csv path ='', dl._cache_path\\(''X'',''5y'',''1d'',''csv''\\)\\); import shutil,os; shutil.rmtree\\(''test_tmp''\\); print\\(''=== All OK ===''\\)\")"
+    ]
+  }
+}

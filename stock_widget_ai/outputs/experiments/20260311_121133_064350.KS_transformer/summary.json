@@ -1,0 +1,48 @@
+{
+  "timestamp": "20260311_121133",
+  "symbol": "064350.KS",
+  "model": "transformer",
+  "params": {
+    "model": "transformer",
+    "epochs": 100,
+    "batch_size": 64,
+    "lr": 0.0005,
+    "hidden_dim": 128,
+    "num_layers": 3,
+    "dropout": 0.2,
+    "loss": "huber",
+    "optimizer": "adamw",
+    "scheduler": "onecycle",
+    "device": "auto",
+    "augmentation": true
+  },
+  "training_history": {
+    "train_loss": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "val_loss": [
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0,
+      8960978.0
+    ]
+  },
+  "model_path": "outputs\\predictions\\064350.KS_transformer.pt"
+}

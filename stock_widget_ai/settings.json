@@ -1,0 +1,114 @@
+{
+  "version": 3,
+  "window": {
+    "width": 1400,
+    "height": 1046,
+    "x": 447,
+    "y": 619,
+    "maximized": false,
+    "last_tab": "data",
+    "splitter_ratio": 0.35,
+    "geometry_b64": "AdnQywADAAAAAAG/AAACTAAABzYAAAaAAAABvwAAAmsAAAc2AAAGgAAAAAAAAAAAB4AAAAG/AAACawAABzYAAAaA"
+  },
+  "data": {
+    "symbol": "064350.KS",
+    "benchmark_symbol": "^GSPC",
+    "period": "max",
+    "interval": "1d",
+    "data_source": "yfinance",
+    "cache_dir": "data",
+    "recent_symbols": [
+      "064350.KS",
+      "AAPL",
+      "MSFT",
+      "NVDA"
+    ]
+  },
+  "model": {
+    "selected_model": "transformer",
+    "sequence_length": 10,
+    "prediction_horizon": 30,
+    "target_type": "return",
+    "feature_groups": [
+      "price",
+      "ta",
+      "market"
+    ],
+    "epochs": 50,
+    "batch_size": 64,
+    "hidden_dim": 128,
+    "num_layers": 3,
+    "num_heads": 4,
+    "dropout": 0.2,
+    "learning_rate": 0.0005,
+    "weight_decay": 0.0001,
+    "grad_clip": 1.0,
+    "loss_type": "huber",
+    "optimizer": "adamw",
+    "scheduler": "onecycle",
+    "early_stopping_patience": 10,
+    "validation_split": 0.15,
+    "test_split": 0.1,
+    "random_seed": 42,
+    "device": "auto",
+    "use_augmentation": true,
+    "use_mixed_precision": true,
+    "mc_dropout_samples": 30
+  },
+  "chart": {
+    "candlestick": true,
+    "show_prediction": true,
+    "show_confidence_interval": true,
+    "show_signals": true,
+    "dark_mode": true,
+    "overlay_indicators": [
+      "SMA20",
+      "SMA60"
+    ],
+    "auto_refresh": false
+  },
+  "backtest": {
+    "initial_cash": 10000000.0,
+    "fee": 0.00015,
+    "slippage": 0.0005,
+    "buy_threshold": 0.01,
+    "sell_threshold": -0.01,
+    "position_size": 1.0,
+    "max_position": 1.0,
+    "holding_period": 0,
+    "use_confidence_filter": true,
+    "confidence_min": 0.6,
+    "long_only": true
+  },
+  "pipeline": {
+    "mode": "lightweight",
+    "last_run_symbol": "",
+    "last_run_ts": "",
+    "last_result_path": "",
+    "step_status": {
+      "data_load": "pending",
+      "feature_build": "pending",
+      "regime_detect": "pending",
+      "model_train": "pending",
+      "walk_forward": "pending",
+      "forecast": "pending",
+      "conformal": "pending",
+      "explain": "pending",
+      "backtest": "pending",
+      "report": "pending"
+    },
+    "wf_n_splits": 5,
+    "wf_gap": 20,
+    "wf_window": "expanding",
+    "wf_min_train": 252,
+    "use_conformal": true,
+    "conformal_alpha": 0.1,
+    "use_regime_ensemble": true,
+    "use_foundation_model": false,
+    "foundation_model": "chronos"
+  },
+  "log_level": "INFO",
+  "output_dir": "outputs",
+  "last_model_path": "outputs\\predictions\\064350.KS_transformer.pt",
+  "last_export_path": ""
+}
