@@ -1,0 +1,54 @@
+2026-03-18 02:59:15,129 [INFO] core.engine_core: EngineCore initializing …
+2026-03-18 02:59:15,405 [INFO] core.engine_core: Shutting down …
+2026-03-18 02:59:15,406 [INFO] core.engine_core: Shutdown complete.  Frames processed: 0  Events recorded: 0
+2026-03-18 02:59:15,800 [INFO] core.engine_core: EngineCore initializing …
+2026-03-18 02:59:15,822 [INFO] core.engine_core: Shutting down …
+2026-03-18 02:59:15,823 [INFO] core.engine_core: Shutdown complete.  Frames processed: 0  Events recorded: 0
+2026-03-18 02:59:16,205 [INFO] core.engine_core: EngineCore initializing …
+2026-03-18 02:59:16,231 [INFO] core.engine_core: Shutting down …
+2026-03-18 02:59:16,231 [INFO] core.engine_core: Shutdown complete.  Frames processed: 0  Events recorded: 0
+2026-03-18 03:14:51,901 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:14:51,911 [ERROR] gui.workers: EngineWorker crashed: Cannot open source: 0
+Traceback (most recent call last):
+  File "F:\dev\ai_dev\ai_dev_xia\video_analysis_system\gui\workers.py", line 152, in _run
+    raise RuntimeError(
+    ...<2 lines>...
+    )
+RuntimeError: Cannot open source: 0
+2026-03-18 03:17:01,473 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:17:01,473 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:17:25,140 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:17:25,348 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-18 03:17:25,348 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-18 03:17:25,351 [INFO] gui.workers: EngineWorker: loop started
+2026-03-18 03:19:17,656 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_031917.csv (3338 rows)
+2026-03-18 03:19:17,723 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_031917.json (3338 frames)
+2026-03-18 03:19:17,723 [INFO] gui.workers: EngineWorker: finished  frames=3338  events=0
+2026-03-18 03:35:55,660 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:35:55,880 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-18 03:35:55,880 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-18 03:35:55,882 [INFO] gui.workers: EngineWorker: loop started
+2026-03-18 03:37:41,408 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_033741.csv (3139 rows)
+2026-03-18 03:37:41,471 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_033741.json (3139 frames)
+2026-03-18 03:37:41,471 [INFO] gui.workers: EngineWorker: finished  frames=3139  events=0
+2026-03-18 03:44:48,838 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 03:44:49,046 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-18 03:44:49,046 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-18 03:44:49,048 [INFO] gui.workers: EngineWorker: loop started
+2026-03-18 03:46:31,726 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_034631.csv (3054 rows)
+2026-03-18 03:46:31,784 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_034631.json (3054 frames)
+2026-03-18 03:46:31,784 [INFO] gui.workers: EngineWorker: finished  frames=3054  events=0
+2026-03-18 04:04:49,426 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 04:04:49,651 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-18 04:04:49,651 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-18 04:04:49,654 [INFO] gui.workers: EngineWorker: loop started
+2026-03-18 04:05:26,260 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_040526.csv (1071 rows)
+2026-03-18 04:05:26,308 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_040526.json (1071 frames)
+2026-03-18 04:05:26,308 [INFO] gui.workers: EngineWorker: finished  frames=1071  events=0
+2026-03-18 04:36:47,362 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-18 04:36:47,582 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-18 04:36:47,583 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-18 04:36:47,584 [INFO] gui.workers: EngineWorker: loop started
+2026-03-18 04:38:35,738 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_043835.csv (3217 rows)
+2026-03-18 04:38:35,805 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_043835.json (3217 frames)
+2026-03-18 04:38:35,806 [INFO] gui.workers: EngineWorker: finished  frames=3217  events=0

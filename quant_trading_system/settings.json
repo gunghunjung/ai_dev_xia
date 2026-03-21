@@ -1,0 +1,97 @@
+{
+  "data": {
+    "symbols": [
+      "365340.KQ",
+      "28513K.KS",
+      "064350.KS",
+      "005930.KS",
+      "079550.KS",
+      "263750.KQ",
+      "218410.KQ",
+      "005490.KS",
+      "006400.KS",
+      "086520.KQ",
+      "450080.KS",
+      "247540.KQ",
+      "196170.KQ",
+      "272210.KS",
+      "012450.KS",
+      "004090.KS",
+      "950160.KQ",
+      "007310.KS",
+      "004370.KS"
+    ],
+    "benchmark": "^KS11",
+    "period": "10y",
+    "interval": "1d",
+    "cache_dir": "cache",
+    "cache_ttl_hours": 23,
+    "source": "yfinance",
+    "use_cache": true
+  },
+  "roi": {
+    "segment_length": 60,
+    "lookahead": 20,
+    "vol_z_threshold": 1.5,
+    "breakout_threshold": 2.0,
+    "volume_spike_threshold": 2.0,
+    "min_roi_spacing": 5,
+    "rolling_window": 20
+  },
+  "model": {
+    "cnn_out_dim": 128,
+    "cnn_channels": [
+      32,
+      64,
+      128
+    ],
+    "cnn_kernel_size": 3,
+    "d_model": 512,
+    "nhead": 8,
+    "num_encoder_layers": 6,
+    "dim_feedforward": 512,
+    "dropout": 0.1,
+    "max_seq_len": 60,
+    "learning_rate": 0.0001,
+    "weight_decay": 1e-05,
+    "batch_size": 32,
+    "epochs": 200,
+    "patience": 20,
+    "grad_clip": 1.0,
+    "use_cuda": true,
+    "num_workers": 0,
+    "image_size": 64
+  },
+  "portfolio": {
+    "method": "mean_variance",
+    "max_weight": 0.35,
+    "min_weight": 0.0,
+    "turnover_limit": 0.3,
+    "target_volatility": 0.15,
+    "rebalance_freq": "weekly",
+    "lookback_vol": 20
+  },
+  "backtest": {
+    "initial_capital": 100000000.0,
+    "transaction_cost": 0.0015,
+    "slippage": 0.0005,
+    "execution_delay": 1,
+    "wf_train_days": 756,
+    "wf_test_days": 252,
+    "wf_step_days": 63
+  },
+  "risk": {
+    "vol_target": 0.15,
+    "max_drawdown_limit": 0.2,
+    "kill_switch_sharpe": -0.5,
+    "regime_detection": true,
+    "vol_lookback": 20,
+    "correlation_cap": 0.7
+  },
+  "model_dir": "outputs/models",
+  "output_dir": "outputs",
+  "log_level": "INFO",
+  "window_width": 1400,
+  "window_height": 900,
+  "theme": "light"
+}

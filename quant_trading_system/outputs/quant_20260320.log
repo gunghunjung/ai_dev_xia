@@ -1,0 +1,537 @@
+[2026-03-20 16:38:24] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 16:38:34] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 16:53:56] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 16:56:51] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 16:57:16] INFO     quant.cache — 캐시 전체 삭제: 0개 파일
+[2026-03-20 16:57:26] WARNING  quant.data — 현대로템: yfinance 데이터 없음
+[2026-03-20 16:57:46] INFO     quant.trainer — 학습 디바이스: cuda
+[2026-03-20 16:57:46] INFO     quant.trainer — GPU: NVIDIA GeForce GTX 1660 SUPER
+[2026-03-20 16:57:46] INFO     quant.trainer — 학습 시작: 005930.KS — 99개 ROI 샘플
+[2026-03-20 16:57:46] INFO     quant.trainer —   이미지 shape: (99, 1, 64, 64)
+[2026-03-20 16:57:46] INFO     quant.trainer —   TS 피처 shape: (99, 32)
+[2026-03-20 16:57:49] INFO     quant.trainer — Epoch   1/100 | Train: 0.213124 | Val: 0.035098 | 경과: 1s
+[2026-03-20 16:57:49] INFO     quant.trainer — Epoch   2/100 | Train: -0.205925 | Val: -0.628754 | 경과: 1s
+[2026-03-20 16:57:49] INFO     quant.trainer — Epoch   3/100 | Train: -0.666589 | Val: -0.997736 | 경과: 2s
+[2026-03-20 16:57:50] INFO     quant.trainer — Epoch   4/100 | Train: -0.928486 | Val: -1.466210 | 경과: 2s
+[2026-03-20 16:57:50] INFO     quant.trainer — Epoch   5/100 | Train: -0.439938 | Val: -1.482151 | 경과: 2s
+[2026-03-20 16:57:51] INFO     quant.trainer — Epoch   6/100 | Train: -1.043813 | Val: -1.282462 | 경과: 3s
+[2026-03-20 16:57:51] INFO     quant.trainer — Epoch   7/100 | Train: -1.077781 | Val: -1.043956 | 경과: 3s
+[2026-03-20 16:57:51] INFO     quant.trainer — Epoch   8/100 | Train: -1.273846 | Val: -1.170145 | 경과: 3s
+[2026-03-20 16:57:51] INFO     quant.trainer — Epoch   9/100 | Train: -1.354556 | Val: -1.494210 | 경과: 3s
+[2026-03-20 16:57:51] INFO     quant.trainer — Epoch  10/100 | Train: -1.359561 | Val: -1.791630 | 경과: 4s
+[2026-03-20 16:57:52] INFO     quant.trainer — Epoch  11/100 | Train: -1.588683 | Val: -2.047309 | 경과: 4s
+[2026-03-20 16:57:54] INFO     quant.trainer — Epoch  12/100 | Train: -1.662130 | Val: -2.178775 | 경과: 6s
+[2026-03-20 16:57:54] INFO     quant.trainer — Epoch  13/100 | Train: -1.375787 | Val: -2.094188 | 경과: 6s
+[2026-03-20 16:57:54] INFO     quant.trainer — Epoch  14/100 | Train: -1.407684 | Val: -1.996581 | 경과: 6s
+[2026-03-20 16:57:54] INFO     quant.trainer — Epoch  15/100 | Train: -1.661167 | Val: -1.903100 | 경과: 7s
+[2026-03-20 16:57:54] INFO     quant.trainer — Epoch  16/100 | Train: -1.448465 | Val: -1.969785 | 경과: 7s
+[2026-03-20 16:57:55] INFO     quant.trainer — Epoch  17/100 | Train: -1.724260 | Val: -2.041012 | 경과: 7s
+[2026-03-20 16:57:55] INFO     quant.trainer — Epoch  18/100 | Train: -1.628761 | Val: -2.156698 | 경과: 7s
+[2026-03-20 16:57:55] INFO     quant.trainer — Epoch  19/100 | Train: -1.816847 | Val: -2.255240 | 경과: 7s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  20/100 | Train: -1.710022 | Val: -2.326629 | 경과: 8s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  21/100 | Train: -1.759470 | Val: -2.215487 | 경과: 8s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  22/100 | Train: -1.721376 | Val: -2.229710 | 경과: 8s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  23/100 | Train: -1.807047 | Val: -2.279342 | 경과: 8s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  24/100 | Train: -1.715457 | Val: -2.181535 | 경과: 8s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  25/100 | Train: -1.824528 | Val: -2.159975 | 경과: 9s
+[2026-03-20 16:57:56] INFO     quant.trainer — Epoch  26/100 | Train: -1.888359 | Val: -2.245898 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  27/100 | Train: -1.782422 | Val: -2.321877 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  28/100 | Train: -1.793700 | Val: -2.331956 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  29/100 | Train: -1.887169 | Val: -2.293552 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  30/100 | Train: -1.720410 | Val: -2.221283 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  31/100 | Train: -1.926348 | Val: -2.221397 | 경과: 9s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  32/100 | Train: -1.893539 | Val: -2.240971 | 경과: 10s
+[2026-03-20 16:57:57] INFO     quant.trainer — Epoch  33/100 | Train: -1.967573 | Val: -2.295866 | 경과: 10s
+[2026-03-20 16:57:58] INFO     quant.trainer — Epoch  34/100 | Train: -1.901668 | Val: -2.352897 | 경과: 10s
+[2026-03-20 16:57:59] INFO     quant.trainer — Epoch  35/100 | Train: -1.767804 | Val: -2.383985 | 경과: 11s
+[2026-03-20 16:57:59] INFO     quant.trainer — Epoch  36/100 | Train: -1.972069 | Val: -2.423300 | 경과: 11s
+[2026-03-20 16:58:00] INFO     quant.trainer — Epoch  37/100 | Train: -2.040042 | Val: -2.426690 | 경과: 12s
+[2026-03-20 16:58:00] INFO     quant.trainer — Epoch  38/100 | Train: -1.807521 | Val: -2.387088 | 경과: 12s
+[2026-03-20 16:58:00] INFO     quant.trainer — Epoch  39/100 | Train: -1.807481 | Val: -2.451437 | 경과: 12s
+[2026-03-20 16:58:01] INFO     quant.trainer — Epoch  40/100 | Train: -1.900233 | Val: -2.399410 | 경과: 14s
+[2026-03-20 16:58:01] INFO     quant.trainer — Epoch  41/100 | Train: -1.629924 | Val: -2.334736 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  42/100 | Train: -1.923186 | Val: -2.307861 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  43/100 | Train: -2.007864 | Val: -2.257922 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  44/100 | Train: -1.875008 | Val: -2.263373 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  45/100 | Train: -1.934505 | Val: -2.312082 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  46/100 | Train: -1.987656 | Val: -2.341600 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  47/100 | Train: -2.045779 | Val: -2.355160 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  48/100 | Train: -2.028940 | Val: -2.403257 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  49/100 | Train: -2.051813 | Val: -2.449736 | 경과: 14s
+[2026-03-20 16:58:02] INFO     quant.trainer — Epoch  50/100 | Train: -1.990519 | Val: -2.488303 | 경과: 15s
+[2026-03-20 16:58:03] INFO     quant.trainer — Epoch  51/100 | Train: -2.248488 | Val: -2.509569 | 경과: 15s
+[2026-03-20 16:58:03] INFO     quant.trainer — Epoch  52/100 | Train: -2.075538 | Val: -2.491838 | 경과: 15s
+[2026-03-20 16:58:03] INFO     quant.trainer — Epoch  53/100 | Train: -2.002087 | Val: -2.476562 | 경과: 15s
+[2026-03-20 16:58:03] INFO     quant.trainer — Epoch  54/100 | Train: -1.805415 | Val: -2.452265 | 경과: 15s
+[2026-03-20 16:58:03] INFO     quant.trainer — Epoch  55/100 | Train: -1.964806 | Val: -2.434949 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  56/100 | Train: -2.111841 | Val: -2.412283 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  57/100 | Train: -2.053279 | Val: -2.359215 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  58/100 | Train: -2.018086 | Val: -2.353217 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  59/100 | Train: -2.006363 | Val: -2.365049 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  60/100 | Train: -2.076153 | Val: -2.395179 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  61/100 | Train: -2.079778 | Val: -2.398839 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  62/100 | Train: -2.156121 | Val: -2.398108 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  63/100 | Train: -2.150268 | Val: -2.405459 | 경과: 16s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  64/100 | Train: -1.963416 | Val: -2.413277 | 경과: 17s
+[2026-03-20 16:58:04] INFO     quant.trainer — Epoch  65/100 | Train: -2.062808 | Val: -2.423952 | 경과: 17s
+[2026-03-20 16:58:05] INFO     quant.trainer — Epoch  66/100 | Train: -2.196797 | Val: -2.437980 | 경과: 17s
+[2026-03-20 16:58:05] INFO     quant.trainer — Early stopping (epoch 66, 최고: epoch 51)
+[2026-03-20 16:58:05] INFO     quant.store — [모델 저장] 005930.KS: F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\model_latest_20260320_165805.pt
+[2026-03-20 16:58:05] INFO     quant.trainer — 학습 완료: 최고 val_loss=-2.509569 (epoch 51)
+[2026-03-20 16:58:06] INFO     quant.trainer — 학습 디바이스: cuda
+[2026-03-20 16:58:06] INFO     quant.trainer — GPU: NVIDIA GeForce GTX 1660 SUPER
+[2026-03-20 16:58:06] INFO     quant.trainer — 학습 시작: 000660.KS — 98개 ROI 샘플
+[2026-03-20 16:58:06] INFO     quant.trainer —   이미지 shape: (98, 1, 64, 64)
+[2026-03-20 16:58:06] INFO     quant.trainer —   TS 피처 shape: (98, 32)
+[2026-03-20 16:58:06] INFO     quant.trainer — Epoch   1/100 | Train: 0.205560 | Val: -0.292821 | 경과: 0s
+[2026-03-20 16:58:06] INFO     quant.trainer — Epoch   2/100 | Train: -0.404669 | Val: -0.419860 | 경과: 1s
+[2026-03-20 16:58:07] INFO     quant.trainer — Epoch   3/100 | Train: -0.652787 | Val: -0.798092 | 경과: 1s
+[2026-03-20 16:58:07] INFO     quant.trainer — Epoch   4/100 | Train: -0.769741 | Val: -0.978672 | 경과: 1s
+[2026-03-20 16:58:08] INFO     quant.trainer — Epoch   5/100 | Train: -0.944850 | Val: -1.117083 | 경과: 2s
+[2026-03-20 16:58:09] INFO     quant.trainer — Epoch   6/100 | Train: -1.090860 | Val: -1.370398 | 경과: 3s
+[2026-03-20 16:58:10] INFO     quant.trainer — Epoch   7/100 | Train: -1.071409 | Val: -1.538475 | 경과: 4s
+[2026-03-20 16:58:11] INFO     quant.trainer — Epoch   8/100 | Train: -1.205723 | Val: -1.625304 | 경과: 5s
+[2026-03-20 16:58:11] INFO     quant.trainer — Epoch   9/100 | Train: -1.189137 | Val: -1.624737 | 경과: 5s
+[2026-03-20 16:58:11] INFO     quant.trainer — Epoch  10/100 | Train: -1.220557 | Val: -1.645065 | 경과: 5s
+[2026-03-20 16:58:12] INFO     quant.trainer — Epoch  11/100 | Train: -1.259896 | Val: -1.628931 | 경과: 6s
+[2026-03-20 16:58:12] INFO     quant.trainer — Epoch  12/100 | Train: -1.226245 | Val: -1.316397 | 경과: 6s
+[2026-03-20 16:58:12] INFO     quant.trainer — Epoch  13/100 | Train: -1.355819 | Val: -1.508298 | 경과: 6s
+[2026-03-20 16:58:12] INFO     quant.trainer — Epoch  14/100 | Train: -1.314629 | Val: -1.798305 | 경과: 6s
+[2026-03-20 16:58:13] INFO     quant.trainer — Epoch  15/100 | Train: -1.433721 | Val: -1.777624 | 경과: 7s
+[2026-03-20 16:58:13] INFO     quant.trainer — Epoch  16/100 | Train: -1.402933 | Val: -1.262619 | 경과: 7s
+[2026-03-20 16:58:13] INFO     quant.trainer — Epoch  17/100 | Train: -1.419219 | Val: -1.558910 | 경과: 7s
+[2026-03-20 16:58:13] INFO     quant.trainer — Epoch  18/100 | Train: -1.530465 | Val: -1.922730 | 경과: 7s
+[2026-03-20 16:58:13] INFO     quant.trainer — Epoch  19/100 | Train: -1.532409 | Val: -1.973909 | 경과: 8s
+[2026-03-20 16:58:14] INFO     quant.trainer — Epoch  20/100 | Train: -1.583098 | Val: -1.668147 | 경과: 8s
+[2026-03-20 16:58:14] INFO     quant.trainer — Epoch  21/100 | Train: -1.617101 | Val: -1.553646 | 경과: 8s
+[2026-03-20 16:58:14] INFO     quant.trainer — Epoch  22/100 | Train: -1.580293 | Val: -1.895765 | 경과: 8s
+[2026-03-20 16:58:14] INFO     quant.trainer — Epoch  23/100 | Train: -1.676241 | Val: -2.058611 | 경과: 8s
+[2026-03-20 16:58:15] INFO     quant.trainer — Epoch  24/100 | Train: -1.670227 | Val: -2.069275 | 경과: 9s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  25/100 | Train: -1.675102 | Val: -1.984548 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  26/100 | Train: -1.635902 | Val: -1.870688 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  27/100 | Train: -1.637577 | Val: -1.905926 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  28/100 | Train: -1.489834 | Val: -2.058388 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  29/100 | Train: -1.772423 | Val: -2.042496 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  30/100 | Train: -1.727528 | Val: -1.928625 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  31/100 | Train: -1.529020 | Val: -2.018837 | 경과: 10s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  32/100 | Train: -1.719087 | Val: -2.047209 | 경과: 11s
+[2026-03-20 16:58:16] INFO     quant.trainer — Epoch  33/100 | Train: -1.801028 | Val: -2.084932 | 경과: 11s
+[2026-03-20 16:58:17] INFO     quant.trainer — Epoch  34/100 | Train: -1.641246 | Val: -2.134460 | 경과: 11s
+[2026-03-20 16:58:17] INFO     quant.trainer — Epoch  35/100 | Train: -1.775762 | Val: -2.158011 | 경과: 11s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  36/100 | Train: -1.697851 | Val: -2.056231 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  37/100 | Train: -1.823309 | Val: -1.884046 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  38/100 | Train: -1.860485 | Val: -1.705256 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  39/100 | Train: -1.760941 | Val: -1.831921 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  40/100 | Train: -1.797278 | Val: -2.105672 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  41/100 | Train: -1.907451 | Val: -2.142075 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  42/100 | Train: -1.856861 | Val: -2.018318 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  43/100 | Train: -1.654821 | Val: -2.060671 | 경과: 12s
+[2026-03-20 16:58:18] INFO     quant.trainer — Epoch  44/100 | Train: -1.913088 | Val: -2.087079 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  45/100 | Train: -1.679346 | Val: -2.022350 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  46/100 | Train: -1.904975 | Val: -1.956944 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  47/100 | Train: -1.903537 | Val: -1.911942 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  48/100 | Train: -1.888069 | Val: -1.962713 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  49/100 | Train: -1.868344 | Val: -2.067796 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Epoch  50/100 | Train: -1.923162 | Val: -2.063933 | 경과: 13s
+[2026-03-20 16:58:19] INFO     quant.trainer — Early stopping (epoch 50, 최고: epoch 35)
+[2026-03-20 16:58:20] INFO     quant.store — [모델 저장] 000660.KS: F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\000660_KS\model_latest_20260320_165819.pt
+[2026-03-20 16:58:20] INFO     quant.trainer — 학습 완료: 최고 val_loss=-2.158011 (epoch 35)
+[2026-03-20 16:58:20] INFO     quant.trainer — 학습 디바이스: cuda
+[2026-03-20 16:58:20] INFO     quant.trainer — GPU: NVIDIA GeForce GTX 1660 SUPER
+[2026-03-20 16:58:20] INFO     quant.trainer — 학습 시작: 035420.KS — 99개 ROI 샘플
+[2026-03-20 16:58:20] INFO     quant.trainer —   이미지 shape: (99, 1, 64, 64)
+[2026-03-20 16:58:20] INFO     quant.trainer —   TS 피처 shape: (99, 32)
+[2026-03-20 16:58:20] INFO     quant.trainer — Epoch   1/100 | Train: 0.289405 | Val: -0.570703 | 경과: 0s
+[2026-03-20 16:58:21] INFO     quant.trainer — Epoch   2/100 | Train: -0.366644 | Val: -0.591212 | 경과: 0s
+[2026-03-20 16:58:21] INFO     quant.trainer — Epoch   3/100 | Train: -0.572705 | Val: -0.691686 | 경과: 1s
+[2026-03-20 16:58:22] INFO     quant.trainer — Epoch   4/100 | Train: -0.619690 | Val: -0.902863 | 경과: 1s
+[2026-03-20 16:58:22] INFO     quant.trainer — Epoch   5/100 | Train: -0.879372 | Val: -1.019986 | 경과: 2s
+[2026-03-20 16:58:23] INFO     quant.trainer — Epoch   6/100 | Train: -0.948769 | Val: -1.031341 | 경과: 2s
+[2026-03-20 16:58:23] INFO     quant.trainer — Epoch   7/100 | Train: -1.033132 | Val: -1.343144 | 경과: 3s
+[2026-03-20 16:58:24] INFO     quant.trainer — Epoch   8/100 | Train: -1.045828 | Val: -1.402448 | 경과: 3s
+[2026-03-20 16:58:24] INFO     quant.trainer — Epoch   9/100 | Train: -1.202479 | Val: -1.373771 | 경과: 4s
+[2026-03-20 16:58:24] INFO     quant.trainer — Epoch  10/100 | Train: -1.189916 | Val: -1.552251 | 경과: 4s
+[2026-03-20 16:58:25] INFO     quant.trainer — Epoch  11/100 | Train: -1.307474 | Val: -1.661921 | 경과: 5s
+[2026-03-20 16:58:27] INFO     quant.trainer — Epoch  12/100 | Train: -1.276736 | Val: -1.793139 | 경과: 6s
+[2026-03-20 16:58:27] INFO     quant.trainer — Epoch  13/100 | Train: -1.240119 | Val: -1.816416 | 경과: 7s
+[2026-03-20 16:58:27] INFO     quant.trainer — Epoch  14/100 | Train: -1.215796 | Val: -1.773447 | 경과: 7s
+[2026-03-20 16:58:27] INFO     quant.trainer — Epoch  15/100 | Train: -1.330740 | Val: -1.884461 | 경과: 7s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  16/100 | Train: -1.361907 | Val: -1.876596 | 경과: 8s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  17/100 | Train: -1.497175 | Val: -1.925101 | 경과: 8s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  18/100 | Train: -1.394017 | Val: -1.899930 | 경과: 9s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  19/100 | Train: -1.376125 | Val: -1.697369 | 경과: 9s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  20/100 | Train: -1.344707 | Val: -1.858759 | 경과: 9s
+[2026-03-20 16:58:29] INFO     quant.trainer — Epoch  21/100 | Train: -1.397301 | Val: -1.934056 | 경과: 9s
+[2026-03-20 16:58:30] INFO     quant.trainer — Epoch  22/100 | Train: -1.495197 | Val: -1.864552 | 경과: 9s
+[2026-03-20 16:58:30] INFO     quant.trainer — Epoch  23/100 | Train: -1.537658 | Val: -1.850068 | 경과: 10s
+[2026-03-20 16:58:30] INFO     quant.trainer — Epoch  24/100 | Train: -1.501407 | Val: -1.924008 | 경과: 10s
+[2026-03-20 16:58:30] INFO     quant.trainer — Epoch  25/100 | Train: -1.614268 | Val: -1.958623 | 경과: 10s
+[2026-03-20 16:58:31] INFO     quant.trainer — Epoch  26/100 | Train: -1.679518 | Val: -1.927477 | 경과: 11s
+[2026-03-20 16:58:31] INFO     quant.trainer — Epoch  27/100 | Train: -1.577453 | Val: -1.986937 | 경과: 11s
+[2026-03-20 16:58:32] INFO     quant.trainer — Epoch  28/100 | Train: -1.700029 | Val: -2.081985 | 경과: 12s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  29/100 | Train: -1.648816 | Val: -2.029203 | 경과: 12s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  30/100 | Train: -1.718936 | Val: -2.049100 | 경과: 12s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  31/100 | Train: -1.693566 | Val: -2.031865 | 경과: 13s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  32/100 | Train: -1.498163 | Val: -2.055022 | 경과: 13s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  33/100 | Train: -1.637438 | Val: -1.992310 | 경과: 13s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  34/100 | Train: -1.787915 | Val: -1.998232 | 경과: 13s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  35/100 | Train: -1.613409 | Val: -2.040717 | 경과: 13s
+[2026-03-20 16:58:33] INFO     quant.trainer — Epoch  36/100 | Train: -1.492926 | Val: -2.026363 | 경과: 13s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  37/100 | Train: -1.712089 | Val: -1.979049 | 경과: 13s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  38/100 | Train: -1.815388 | Val: -1.997852 | 경과: 13s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  39/100 | Train: -1.782823 | Val: -2.070170 | 경과: 13s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  40/100 | Train: -1.824367 | Val: -2.081866 | 경과: 14s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  41/100 | Train: -1.818422 | Val: -1.959302 | 경과: 14s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  42/100 | Train: -1.773118 | Val: -1.905806 | 경과: 14s
+[2026-03-20 16:58:34] INFO     quant.trainer — Epoch  43/100 | Train: -1.854927 | Val: -1.892876 | 경과: 14s
+[2026-03-20 16:58:34] INFO     quant.trainer — Early stopping (epoch 43, 최고: epoch 28)
+[2026-03-20 16:58:35] INFO     quant.store — [모델 저장] 035420.KS: F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\035420_KS\model_latest_20260320_165834.pt
+[2026-03-20 16:58:35] INFO     quant.trainer — 학습 완료: 최고 val_loss=-2.081985 (epoch 28)
+[2026-03-20 16:58:46] INFO     quant.data — [데이터] 005930.KS: 1211행 로드 완료
+[2026-03-20 16:58:46] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:46] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:46] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:46] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:46] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:46] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:46] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:46] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:46] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:46] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:46] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:46] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:46] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:46] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:46] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:46] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:47] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:47] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:47] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:47] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:47] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:47] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:47] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:47] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:48] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:48] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:53] INFO     quant.data — [데이터] 005930.KS: 1211행 로드 완료
+[2026-03-20 16:58:53] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:53] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:53] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:53] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:53] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:53] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:53] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:54] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:54] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:54] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:54] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:54] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:54] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:54] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:54] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:55] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:55] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:55] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:55] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:55] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:55] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:55] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:55] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:55] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:58:55] INFO     quant.store — [모델 로드] 005930.KS → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\005930_KS\latest.pt
+[2026-03-20 16:58:55] INFO     quant.store —   타임스탬프: 20260320_165805
+[2026-03-20 16:58:55] INFO     quant.store —   best_val_loss: -2.5096
+[2026-03-20 16:58:55] INFO     quant.store —   best_epoch: 51.0000
+[2026-03-20 16:58:55] INFO     quant.store —   total_epochs: 66.0000
+[2026-03-20 16:58:55] INFO     quant.store —   train_time_s: 16.7665
+[2026-03-20 16:58:55] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 16:58:55] INFO     quant.portfolio — 포트폴리오 구성: 1개 종목, 최대비중=100.00%
+[2026-03-20 16:59:42] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 17:07:03] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 17:27:49] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 19:51:57] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 19:52:17] INFO     quant.stocks — KRX 종목 실시간 조회 중...
+[2026-03-20 19:52:24] INFO     quant.stocks — pykrx 전체 종목 조회 완료: 2879개
+[2026-03-20 19:52:24] INFO     quant.stocks — KRX 캐시 저장: 2879개 종목
+[2026-03-20 19:54:42] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 19:56:23] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 19:57:59] INFO     quant.trainer — 학습 디바이스: cuda
+[2026-03-20 19:57:59] INFO     quant.trainer — GPU: NVIDIA GeForce GTX 1660 SUPER
+[2026-03-20 19:57:59] INFO     quant.trainer — 학습 시작: 365340.KQ — 67개 ROI 샘플
+[2026-03-20 19:57:59] INFO     quant.trainer —   이미지 shape: (67, 1, 64, 64)
+[2026-03-20 19:57:59] INFO     quant.trainer —   TS 피처 shape: (67, 32)
+[2026-03-20 19:58:01] INFO     quant.trainer — Epoch   1/100 | Train: 0.037971 | Val: -0.704758 | 경과: 0s
+[2026-03-20 19:58:02] INFO     quant.trainer — Epoch   2/100 | Train: -0.531339 | Val: -0.994575 | 경과: 1s
+[2026-03-20 19:58:02] INFO     quant.trainer — Epoch   3/100 | Train: -0.727876 | Val: -0.493769 | 경과: 1s
+[2026-03-20 19:58:02] INFO     quant.trainer — Epoch   4/100 | Train: -0.783601 | Val: -0.942990 | 경과: 1s
+[2026-03-20 19:58:02] INFO     quant.trainer — Epoch   5/100 | Train: -1.031653 | Val: -1.295633 | 경과: 1s
+[2026-03-20 19:58:03] INFO     quant.trainer — Epoch   6/100 | Train: -0.916490 | Val: -1.371269 | 경과: 2s
+[2026-03-20 19:58:03] INFO     quant.trainer — Epoch   7/100 | Train: -1.135176 | Val: -0.913978 | 경과: 2s
+[2026-03-20 19:58:03] INFO     quant.trainer — Epoch   8/100 | Train: -0.824561 | Val: -0.581016 | 경과: 2s
+[2026-03-20 19:58:03] INFO     quant.trainer — Epoch   9/100 | Train: -0.328011 | Val: -1.350318 | 경과: 2s
+[2026-03-20 19:58:03] INFO     quant.trainer — Epoch  10/100 | Train: -1.078454 | Val: -1.590986 | 경과: 2s
+[2026-03-20 19:58:04] INFO     quant.trainer — Epoch  11/100 | Train: -1.171173 | Val: -1.408167 | 경과: 3s
+[2026-03-20 19:58:04] INFO     quant.trainer — Epoch  12/100 | Train: -1.188624 | Val: -1.482727 | 경과: 3s
+[2026-03-20 19:58:04] INFO     quant.trainer — Epoch  13/100 | Train: -1.189903 | Val: -1.642236 | 경과: 3s
+[2026-03-20 19:58:05] INFO     quant.trainer — Epoch  14/100 | Train: -1.189380 | Val: -1.716123 | 경과: 4s
+[2026-03-20 19:58:05] INFO     quant.trainer — Epoch  15/100 | Train: -1.168443 | Val: -1.751226 | 경과: 4s
+[2026-03-20 19:58:06] INFO     quant.trainer — Epoch  16/100 | Train: -1.301316 | Val: -1.748253 | 경과: 5s
+[2026-03-20 19:58:06] INFO     quant.trainer — Epoch  17/100 | Train: -1.448405 | Val: -1.813476 | 경과: 5s
+[2026-03-20 19:58:07] INFO     quant.trainer — Epoch  18/100 | Train: -1.495196 | Val: -1.899719 | 경과: 6s
+[2026-03-20 19:58:07] INFO     quant.trainer — Epoch  19/100 | Train: -1.335961 | Val: -1.959505 | 경과: 6s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  20/100 | Train: -1.500828 | Val: -2.023381 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  21/100 | Train: -1.497334 | Val: -1.885041 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  22/100 | Train: -1.374372 | Val: -1.870394 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  23/100 | Train: -1.536331 | Val: -1.993285 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  24/100 | Train: -1.558040 | Val: -2.008768 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  25/100 | Train: -1.303132 | Val: -1.978157 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  26/100 | Train: -1.540859 | Val: -1.957309 | 경과: 7s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  27/100 | Train: -1.416963 | Val: -1.949688 | 경과: 8s
+[2026-03-20 19:58:08] INFO     quant.trainer — Epoch  28/100 | Train: -1.593996 | Val: -1.972413 | 경과: 8s
+[2026-03-20 19:58:09] INFO     quant.trainer — Epoch  29/100 | Train: -1.708258 | Val: -2.030986 | 경과: 8s
+[2026-03-20 19:58:09] INFO     quant.trainer — Epoch  30/100 | Train: -1.662855 | Val: -2.093598 | 경과: 8s
+[2026-03-20 19:58:09] INFO     quant.trainer — Epoch  31/100 | Train: -1.768398 | Val: -2.155549 | 경과: 8s
+[2026-03-20 19:58:11] INFO     quant.trainer — Epoch  32/100 | Train: -1.571932 | Val: -2.176509 | 경과: 10s
+[2026-03-20 19:58:11] INFO     quant.trainer — Epoch  33/100 | Train: -1.579972 | Val: -2.177947 | 경과: 11s
+[2026-03-20 19:58:12] INFO     quant.trainer — Epoch  34/100 | Train: -1.575161 | Val: -2.195040 | 경과: 11s
+[2026-03-20 19:58:12] INFO     quant.trainer — Epoch  35/100 | Train: -1.817471 | Val: -2.188448 | 경과: 11s
+[2026-03-20 19:58:12] INFO     quant.trainer — Epoch  36/100 | Train: -1.494723 | Val: -2.170084 | 경과: 11s
+[2026-03-20 19:58:12] INFO     quant.trainer — Epoch  37/100 | Train: -1.573409 | Val: -2.142551 | 경과: 12s
+[2026-03-20 19:58:12] INFO     quant.trainer — Epoch  38/100 | Train: -1.659930 | Val: -2.087478 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  39/100 | Train: -1.675173 | Val: -2.049089 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  40/100 | Train: -1.607327 | Val: -2.058663 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  41/100 | Train: -1.798561 | Val: -2.089452 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  42/100 | Train: -1.766585 | Val: -2.100143 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  43/100 | Train: -1.632243 | Val: -2.079646 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  44/100 | Train: -1.474149 | Val: -2.026490 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  45/100 | Train: -1.551298 | Val: -2.042325 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  46/100 | Train: -1.651044 | Val: -2.080490 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  47/100 | Train: -1.705954 | Val: -2.083563 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  48/100 | Train: -1.761106 | Val: -2.077579 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Epoch  49/100 | Train: -1.657437 | Val: -2.071169 | 경과: 12s
+[2026-03-20 19:58:13] INFO     quant.trainer — Early stopping (epoch 49, 최고: epoch 34)
+[2026-03-20 19:58:14] INFO     quant.store — [모델 저장] 365340.KQ: F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\365340_KQ\model_latest_20260320_195813.pt
+[2026-03-20 19:58:14] INFO     quant.trainer — 학습 완료: 최고 val_loss=-2.195040 (epoch 34)
+[2026-03-20 19:58:37] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:37] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:37] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:37] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:37] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:48] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:48] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:48] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:48] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:58:48] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:06] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 19:59:17] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:17] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:17] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:17] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:17] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:30] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:30] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:30] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:30] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:30] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:45] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:45] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:45] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:45] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:45] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:47] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:47] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:47] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:47] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:47] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 19:59:53] INFO     quant.store — [모델 로드] 365340.KQ → F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\365340_KQ\latest.pt
+[2026-03-20 19:59:53] INFO     quant.store —   타임스탬프: 20260320_195813
+[2026-03-20 19:59:53] INFO     quant.store —   best_val_loss: -2.1950
+[2026-03-20 19:59:53] INFO     quant.store —   best_epoch: 34.0000
+[2026-03-20 19:59:53] INFO     quant.store —   total_epochs: 49.0000
+[2026-03-20 19:59:53] INFO     quant.store —   train_time_s: 12.4824
+[2026-03-20 19:59:53] INFO     quant.trainer — 학습 디바이스: cpu
+[2026-03-20 19:59:53] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 20:58:52] INFO     quant.gui — 메인 윈도우 시작
+[2026-03-20 20:59:09] INFO     quant.trainer — 학습 디바이스: cuda
+[2026-03-20 20:59:09] INFO     quant.trainer — GPU: NVIDIA GeForce GTX 1660 SUPER
+[2026-03-20 20:59:09] INFO     quant.trainer — 학습 시작: 365340.KQ — 67개 ROI 샘플
+[2026-03-20 20:59:09] INFO     quant.trainer —   이미지 shape: (67, 1, 64, 64)
+[2026-03-20 20:59:09] INFO     quant.trainer —   TS 피처 shape: (67, 32)
+[2026-03-20 20:59:12] INFO     quant.trainer — Epoch   1/100 | Train: 0.043540 | Val: -0.394654 | 경과: 1s
+[2026-03-20 20:59:12] INFO     quant.trainer — Epoch   2/100 | Train: -0.220277 | Val: -0.613283 | 경과: 1s
+[2026-03-20 20:59:12] INFO     quant.trainer — Epoch   3/100 | Train: -0.261659 | Val: -0.753395 | 경과: 2s
+[2026-03-20 20:59:13] INFO     quant.trainer — Epoch   4/100 | Train: -0.562883 | Val: -0.909973 | 경과: 2s
+[2026-03-20 20:59:13] INFO     quant.trainer — Epoch   5/100 | Train: -0.479007 | Val: -0.921239 | 경과: 2s
+[2026-03-20 20:59:14] INFO     quant.trainer — Epoch   6/100 | Train: -0.802167 | Val: -0.882266 | 경과: 4s
+[2026-03-20 20:59:15] INFO     quant.trainer — Epoch   7/100 | Train: -0.762020 | Val: -0.928594 | 경과: 4s
+[2026-03-20 20:59:15] INFO     quant.trainer — Epoch   8/100 | Train: -0.941075 | Val: -1.093655 | 경과: 4s
+[2026-03-20 20:59:15] INFO     quant.trainer — Epoch   9/100 | Train: -0.971426 | Val: -1.219996 | 경과: 5s
+[2026-03-20 20:59:16] INFO     quant.trainer — Epoch  10/100 | Train: -1.026209 | Val: -1.303138 | 경과: 5s
+[2026-03-20 20:59:16] INFO     quant.trainer — Epoch  11/100 | Train: -1.135383 | Val: -1.378923 | 경과: 5s
+[2026-03-20 20:59:16] INFO     quant.trainer — Epoch  12/100 | Train: -0.924839 | Val: -1.403471 | 경과: 6s
+[2026-03-20 20:59:17] INFO     quant.trainer — Epoch  13/100 | Train: -1.114415 | Val: -1.364233 | 경과: 6s
+[2026-03-20 20:59:17] INFO     quant.trainer — Epoch  14/100 | Train: -1.143991 | Val: -1.362036 | 경과: 6s
+[2026-03-20 20:59:17] INFO     quant.trainer — Epoch  15/100 | Train: -1.127373 | Val: -1.423952 | 경과: 6s
+[2026-03-20 20:59:19] INFO     quant.trainer — Epoch  16/100 | Train: -1.117975 | Val: -1.450653 | 경과: 8s
+[2026-03-20 20:59:19] INFO     quant.trainer — Epoch  17/100 | Train: -1.154431 | Val: -1.456194 | 경과: 9s
+[2026-03-20 20:59:20] INFO     quant.trainer — Epoch  18/100 | Train: -1.116276 | Val: -1.429919 | 경과: 9s
+[2026-03-20 20:59:20] INFO     quant.trainer — Epoch  19/100 | Train: -1.285671 | Val: -1.474796 | 경과: 9s
+[2026-03-20 20:59:21] INFO     quant.trainer — Epoch  20/100 | Train: -1.305718 | Val: -1.570714 | 경과: 10s
+[2026-03-20 20:59:21] INFO     quant.trainer — Epoch  21/100 | Train: -1.166676 | Val: -1.629641 | 경과: 11s
+[2026-03-20 20:59:22] INFO     quant.trainer — Epoch  22/100 | Train: -1.325259 | Val: -1.657569 | 경과: 12s
+[2026-03-20 20:59:23] INFO     quant.trainer — Epoch  23/100 | Train: -1.329964 | Val: -1.687916 | 경과: 12s
+[2026-03-20 20:59:24] INFO     quant.trainer — Epoch  24/100 | Train: -1.207529 | Val: -1.721264 | 경과: 13s
+[2026-03-20 20:59:24] INFO     quant.trainer — Epoch  25/100 | Train: -1.376981 | Val: -1.703334 | 경과: 13s
+[2026-03-20 20:59:24] INFO     quant.trainer — Epoch  26/100 | Train: -1.572804 | Val: -1.681907 | 경과: 13s
+[2026-03-20 20:59:24] INFO     quant.trainer — Epoch  27/100 | Train: -1.342862 | Val: -1.775207 | 경과: 13s
+[2026-03-20 20:59:25] INFO     quant.trainer — Epoch  28/100 | Train: -1.340106 | Val: -1.867895 | 경과: 14s
+[2026-03-20 20:59:25] INFO     quant.trainer — Epoch  29/100 | Train: -1.441138 | Val: -1.854696 | 경과: 15s
+[2026-03-20 20:59:25] INFO     quant.trainer — Epoch  30/100 | Train: -1.350611 | Val: -1.824683 | 경과: 15s
+[2026-03-20 20:59:25] INFO     quant.trainer — Epoch  31/100 | Train: -1.609324 | Val: -1.857770 | 경과: 15s
+[2026-03-20 20:59:25] INFO     quant.trainer — Epoch  32/100 | Train: -1.414523 | Val: -1.903432 | 경과: 15s
+[2026-03-20 20:59:26] INFO     quant.trainer — Epoch  33/100 | Train: -1.446383 | Val: -1.875577 | 경과: 16s
+[2026-03-20 20:59:26] INFO     quant.trainer — Epoch  34/100 | Train: -1.516431 | Val: -1.913543 | 경과: 16s
+[2026-03-20 20:59:27] INFO     quant.trainer — Epoch  35/100 | Train: -1.511595 | Val: -1.914818 | 경과: 16s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  36/100 | Train: -1.488450 | Val: -1.851867 | 경과: 17s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  37/100 | Train: -1.512438 | Val: -1.814065 | 경과: 17s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  38/100 | Train: -1.485521 | Val: -1.816329 | 경과: 17s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  39/100 | Train: -1.576597 | Val: -1.868278 | 경과: 17s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  40/100 | Train: -1.576572 | Val: -1.902564 | 경과: 17s
+[2026-03-20 20:59:28] INFO     quant.trainer — Epoch  41/100 | Train: -1.653317 | Val: -1.986050 | 경과: 17s
+[2026-03-20 20:59:29] INFO     quant.trainer — Epoch  42/100 | Train: -1.542238 | Val: -2.054509 | 경과: 18s
+[2026-03-20 20:59:29] INFO     quant.trainer — Epoch  43/100 | Train: -1.595414 | Val: -2.074905 | 경과: 19s
+[2026-03-20 20:59:30] INFO     quant.trainer — Epoch  44/100 | Train: -1.618361 | Val: -2.100986 | 경과: 20s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  45/100 | Train: -1.554200 | Val: -2.089154 | 경과: 20s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  46/100 | Train: -1.482523 | Val: -1.994690 | 경과: 20s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  47/100 | Train: -1.754941 | Val: -1.969338 | 경과: 21s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  48/100 | Train: -1.473877 | Val: -2.035886 | 경과: 21s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  49/100 | Train: -1.542816 | Val: -2.061425 | 경과: 21s
+[2026-03-20 20:59:31] INFO     quant.trainer — Epoch  50/100 | Train: -1.641617 | Val: -2.100121 | 경과: 21s
+[2026-03-20 20:59:32] INFO     quant.trainer — Epoch  51/100 | Train: -1.792668 | Val: -2.131924 | 경과: 21s
+[2026-03-20 20:59:32] INFO     quant.trainer — Epoch  52/100 | Train: -1.581209 | Val: -2.141790 | 경과: 21s
+[2026-03-20 20:59:32] INFO     quant.trainer — Epoch  53/100 | Train: -1.530283 | Val: -2.131994 | 경과: 22s
+[2026-03-20 20:59:32] INFO     quant.trainer — Epoch  54/100 | Train: -1.670575 | Val: -2.090621 | 경과: 22s
+[2026-03-20 20:59:32] INFO     quant.trainer — Epoch  55/100 | Train: -1.679019 | Val: -2.049799 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  56/100 | Train: -1.652196 | Val: -2.032740 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  57/100 | Train: -1.520758 | Val: -2.061371 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  58/100 | Train: -1.594883 | Val: -2.104482 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  59/100 | Train: -1.655898 | Val: -2.119410 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  60/100 | Train: -1.790971 | Val: -2.124495 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  61/100 | Train: -1.597960 | Val: -2.124368 | 경과: 22s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  62/100 | Train: -1.547960 | Val: -2.102896 | 경과: 23s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  63/100 | Train: -1.746571 | Val: -2.075682 | 경과: 23s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  64/100 | Train: -1.759323 | Val: -2.037464 | 경과: 23s
+[2026-03-20 20:59:33] INFO     quant.trainer — Epoch  65/100 | Train: -1.830771 | Val: -1.989208 | 경과: 23s
+[2026-03-20 20:59:34] INFO     quant.trainer — Epoch  66/100 | Train: -1.734875 | Val: -1.931876 | 경과: 23s
+[2026-03-20 20:59:34] INFO     quant.trainer — Epoch  67/100 | Train: -1.784499 | Val: -1.935764 | 경과: 23s
+[2026-03-20 20:59:34] INFO     quant.trainer — Early stopping (epoch 67, 최고: epoch 52)
+[2026-03-20 20:59:34] INFO     quant.store — [모델 저장] 365340.KQ: F:\dev\ai_dev\ai_dev_xia\quant_trading_system\outputs/models\365340_KQ\model_latest_20260320_205934.pt
+[2026-03-20 20:59:34] INFO     quant.trainer — 학습 완료: 최고 val_loss=-2.141790 (epoch 52)
+[2026-03-20 21:00:11] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 21:00:11] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 21:00:11] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 21:00:11] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%
+[2026-03-20 21:00:11] INFO     quant.portfolio — 롱 신호 없음 → 현금 100%

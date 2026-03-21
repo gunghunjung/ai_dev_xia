@@ -1,0 +1,16 @@
+# Video Analysis System — dependencies
+# -------------------------------------------------
+# Core (required)
+opencv-python>=4.8
+numpy>=1.24
+Pillow>=9.0           # GUI: BGR→Tkinter PhotoImage conversion
+
+# Optional AI backends (install whichever you use)
+# onnxruntime>=1.16          # for ONNX model inference
+# torch>=2.0                 # for PyTorch model inference
+# torchvision>=0.15
+
+# Optional visualisation extras
+# matplotlib>=3.7            # for offline debug plots only
+
+# No other hard dependencies — the system runs with just opencv + numpy.
