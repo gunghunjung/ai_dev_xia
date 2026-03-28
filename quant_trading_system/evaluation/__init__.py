@@ -1,2 +1,7 @@
 from .metrics import PerformanceEvaluator
-__all__ = ["PerformanceEvaluator"]
+from .news_ablation import NewsAblationStudy, AblationResult, ModelScore
+
+__all__ = [
+    "PerformanceEvaluator",
+    "NewsAblationStudy", "AblationResult", "ModelScore",
+]

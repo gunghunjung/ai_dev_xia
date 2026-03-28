@@ -50,6 +50,8 @@ class GPUMonitor:
             'mem_total_mb': float,
             'temperature': float (°C),
             'power_w': float (W),
+            'cuda_allocated_mb': float,   # torch.cuda.memory_allocated()
+            'cuda_reserved_mb': float,    # torch.cuda.memory_reserved()
         }]
         """
         if not self._nvml_ok:
@@ -77,6 +79,17 @@ class GPUMonitor:
                 except Exception:
                     power = 0.0
 
+                # PyTorch CUDA 할당/예약 메모리 (GPU 인덱스 일치 시)
+                try:
+                    import torch
+                    if torch.cuda.is_available() and i < torch.cuda.device_count():
+                        cuda_alloc = torch.cuda.memory_allocated(i) / 1024 / 1024
+                        cuda_reserv = torch.cuda.memory_reserved(i) / 1024 / 1024
+                    else:
+                        cuda_alloc = cuda_reserv = 0.0
+                except Exception:
+                    cuda_alloc = cuda_reserv = 0.0
+
                 stats.append({
                     "index": i,
                     "name": name,
@@ -86,6 +99,8 @@ class GPUMonitor:
                     "mem_total_mb": mem.total / 1024 / 1024,
                     "temperature": float(temp),
                     "power_w": power,
+                    "cuda_allocated_mb": cuda_alloc,
+                    "cuda_reserved_mb": cuda_reserv,
                 })
         except Exception as e:
             return self._dummy_stats(error=str(e))
@@ -95,16 +110,31 @@ class GPUMonitor:
         return stats
 
     def _dummy_stats(self, error: str = "NVML 사용불가") -> List[Dict]:
-        """NVML 없을 때 더미 데이터 반환"""
+        """NVML 없을 때 더미 데이터 반환 (PyTorch CUDA 정보는 여전히 시도)"""
+        try:
+            import torch
+            if torch.cuda.is_available():
+                cuda_alloc  = torch.cuda.memory_allocated(0) / 1024 / 1024
+                cuda_reserv = torch.cuda.memory_reserved(0)  / 1024 / 1024
+                total_mb    = torch.cuda.get_device_properties(0).total_memory / 1024 / 1024
+                name        = torch.cuda.get_device_name(0)
+            else:
+                cuda_alloc = cuda_reserv = total_mb = 0.0
+                name = f"GPU 없음 ({error})"
+        except Exception:
+            cuda_alloc = cuda_reserv = total_mb = 0.0
+            name = f"GPU 없음 ({error})"
         return [{
             "index": 0,
-            "name": f"GPU 없음 ({error})",
+            "name": name,
             "util_gpu": 0.0,
-            "util_mem": 0.0,
-            "mem_used_mb": 0.0,
-            "mem_total_mb": 0.0,
+            "util_mem": cuda_alloc / max(total_mb, 1) * 100,
+            "mem_used_mb": cuda_alloc,
+            "mem_total_mb": total_mb,
             "temperature": 0.0,
             "power_w": 0.0,
+            "cuda_allocated_mb": cuda_alloc,
+            "cuda_reserved_mb": cuda_reserv,
         }]
 
     def register_callback(self, fn: Callable) -> None:

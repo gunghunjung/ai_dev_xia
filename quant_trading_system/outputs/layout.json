@@ -1,0 +1,66 @@
+{
+  ".!notebook.!frame.!panedwindow": [
+    [
+      632,
+      1
+    ]
+  ],
+  ".!notebook.!frame2.!panedwindow": [
+    [
+      550,
+      1
+    ]
+  ],
+  ".!notebook.!frame3.!panedwindow": [
+    [
+      329,
+      1
+    ]
+  ],
+  ".!notebook.!frame4.!panedwindow": [
+    [
+      1,
+      273
+    ]
+  ],
+  ".!notebook.!frame4.!panedwindow.!frame2.!panedwindow": [
+    [
+      598,
+      1
+    ],
+    [
+      1199,
+      1
+    ]
+  ],
+  ".!notebook.!frame5.!panedwindow": [
+    [
+      556,
+      1
+    ]
+  ],
+  ".!notebook.!frame9.!panedwindow": [
+    [
+      772,
+      1
+    ]
+  ],
+  ".!notebook.!frame12.!panedwindow": [
+    [
+      978,
+      1
+    ]
+  ],
+  ".!notebook.!frame9.!notebook.!frame.!panedwindow": [
+    [
+      827,
+      1
+    ]
+  ],
+  ".!notebook.!frame13.!notebook.!frame2.!panedwindow": [
+    [
+      514,
+      1
+    ]
+  ]
+}

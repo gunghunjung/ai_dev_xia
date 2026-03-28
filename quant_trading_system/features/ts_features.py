@@ -166,6 +166,61 @@ class TSFeatureExtractor:
         feats.append(np.argmax(high) / max(T-1, 1))
         feats.append(np.argmin(low) / max(T-1, 1))
 
+        # ── 8. 추가 시장 구조 피처 (zero-padding 제거 → 의미 있는 7개) ─────
+        # ① 가격 채널 내 위치: (Close - Low_min) / (High_max - Low_min)
+        #    0 = 구간 최저, 1 = 구간 최고 → 현재 상대적 위치
+        price_pos = ((close[-1] - low.min())
+                     / (high.max() - low.min() + 1e-10))
+        feats.append(price_pos)
+
+        # ② 연속 상승/하락 캔들 수 (마지막 시점 기준, 부호 포함)
+        #    +k = 마지막 k개 연속 상승, -k = 마지막 k개 연속 하락
+        streak = 0
+        if len(close) >= 2:
+            direction = 1 if close[-1] > close[-2] else -1
+            for j in range(len(close) - 1, 0, -1):
+                curr_dir = 1 if close[j] > close[j-1] else -1
+                if curr_dir == direction:
+                    streak += direction
+                else:
+                    break
+        feats.append(float(streak) / max(T, 1))   # T로 정규화
+
+        # ③ 거래량 가중 평균 가격 대비 현재 Close 위치
+        #    VWAP-like: Σ(close×volume) / Σ(volume)
+        vol_abs = np.abs(volume)
+        vwap = (np.sum(close * vol_abs) / (np.sum(vol_abs) + 1e-10))
+        feats.append((close[-1] - vwap) / (vwap + 1e-10))
+
+        # ④ 일중 변동성 비율: ATR / (고가 - 저가) 평균 비율
+        #    값이 클수록 갭(gap) 이 많음을 의미
+        hl_avg = (high - low).mean() + 1e-10
+        if len(hc) > 0:
+            tr_mean_val = np.maximum(hl[1:], np.maximum(hc, lc)).mean()
+        else:
+            tr_mean_val = hl_avg
+        feats.append(tr_mean_val / hl_avg)
+
+        # ⑤ 단기 모멘텀 가속도: 최근 1/4 구간 수익률 - 직전 1/4 구간 수익률
+        q = max(1, T // 4)
+        mom_recent = close[-1] - close[-q-1] if len(close) > q else 0.0
+        mom_prev   = close[-q-1] - close[-2*q-1] if len(close) > 2*q else 0.0
+        feats.append(mom_recent - mom_prev)
+
+        # ⑥ 변동성 레짐: 후반부 변동성 / 전반부 변동성
+        #    > 1 이면 최근 변동성이 증가 (불안정), < 1 이면 안정화
+        half = max(1, T // 2)
+        vol_recent = np.std(close[-half:]) + 1e-10
+        vol_early  = np.std(close[:half])  + 1e-10
+        feats.append(vol_recent / vol_early)
+
+        # ⑦ 음영비율(Shadow ratio): 몸통 대비 위/아래 꼬리 총합
+        #    크면 불확실성 높음 (양방향 탐색 활발)
+        body_total   = np.abs(close - open_).mean() + 1e-10
+        upper_shadow = (high - np.maximum(close, open_)).mean()
+        lower_shadow = (np.minimum(close, open_) - low).mean()
+        feats.append((upper_shadow + lower_shadow) / body_total)
+
         # ── 피처 벡터 정렬 ────────────────────────────
         feat_arr = np.array(feats, dtype=np.float64)
 

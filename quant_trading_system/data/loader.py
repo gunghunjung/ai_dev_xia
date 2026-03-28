@@ -38,6 +38,48 @@ class DataLoader:
             self.cache.save(df, symbol, period, interval)
         return df
 
+    def load_cached_only(self, symbol: str,
+                         period: str = "5y",
+                         interval: str = "1d") -> Optional[pd.DataFrame]:
+        """
+        다운로드 없이 캐시에서만 로드.
+        캐시 없으면 None 반환. 신선도 검사용.
+        """
+        return self.cache.load(symbol, period, interval)
+
+    def is_stale(self, symbol: str, period: str = "5y",
+                 interval: str = "1d", max_age_days: int = 2) -> bool:
+        """
+        종목 데이터가 max_age_days일 이상 오래됐는지 확인.
+        True = 갱신 필요
+        """
+        import datetime
+        df = self.load_cached_only(symbol, period, interval)
+        if df is None or df.empty:
+            return True
+        last_date = df.index[-1]
+        if hasattr(last_date, "date"):
+            last_date = last_date.date()
+        delta = (datetime.date.today() - last_date).days
+        return delta >= max_age_days
+
+    def refresh_if_stale(self, symbol: str, period: str = "5y",
+                          interval: str = "1d",
+                          max_age_days: int = 2) -> Optional[pd.DataFrame]:
+        """
+        오래된 데이터면 재다운로드, 최신이면 캐시 반환.
+        일일 자동갱신 루틴에서 사용.
+        """
+        if self.is_stale(symbol, period, interval, max_age_days):
+            logger.info(f"[{symbol}] 데이터 stale → 재다운로드")
+            df = self._download(symbol, period, interval)
+            if df is not None and not df.empty:
+                self.cache.save(df, symbol, period, interval)
+                return df
+            # 다운로드 실패 시 이전 캐시라도 반환
+            return self.load_cached_only(symbol, period, interval)
+        return self.load_cached_only(symbol, period, interval)
+
     def load_multi(self, symbols: List[str], period: str = "5y",
                    interval: str = "1d") -> Dict[str, pd.DataFrame]:
         """복수 심볼 로드. 실패한 심볼은 건너뜀"""
@@ -147,3 +189,88 @@ class DataLoader:
         if df is None:
             return None
         return df["Close"].pct_change().dropna()
+
+    # ──────────────────────────────────────────────────
+    # 실시간 시세 (yfinance fast_info, ~15분 지연)
+    # ──────────────────────────────────────────────────
+
+    def get_realtime_price(self, symbol: str) -> Optional[dict]:
+        """
+        yfinance fast_info 로 현재가 조회 (약 15분 지연).
+        반환 dict: symbol, price, prev_close, change, change_pct,
+                   high, low, volume, currency
+        """
+        try:
+            import yfinance as yf
+            fi = yf.Ticker(symbol).fast_info
+
+            def _safe(key, default=None):
+                try:
+                    v = fi[key]
+                    return float(v) if v is not None else default
+                except Exception:
+                    return default
+
+            price      = _safe("last_price")
+            prev_close = _safe("previous_close")
+
+            if price is None:
+                return None
+
+            change     = (price - prev_close) if prev_close else 0.0
+            change_pct = (change / prev_close * 100) if prev_close else 0.0
+
+            volume = _safe("regular_market_volume")
+            if volume is None:
+                volume = _safe("three_month_average_volume")
+
+            currency = ""
+            try:
+                currency = fi["currency"] or ""
+            except Exception:
+                pass
+
+            return {
+                "symbol":     symbol,
+                "price":      price,
+                "prev_close": prev_close,
+                "change":     change,
+                "change_pct": change_pct,
+                "high":       _safe("day_high"),
+                "low":        _safe("day_low"),
+                "volume":     volume,
+                "currency":   currency,
+            }
+        except Exception as e:
+            logger.debug(f"{symbol} 실시간 시세 조회 실패: {e}")
+            return None
+
+    def get_realtime_prices(
+        self,
+        symbols: List[str],
+        max_workers: int = 8,
+    ) -> Dict[str, dict]:
+        """
+        복수 심볼 실시간 현재가 일괄 조회 (병렬 ThreadPoolExecutor).
+
+        순차 조회 대비 ~N배 빠름 (네트워크 I/O 병렬화).
+        max_workers 기본값 8 — yfinance 서버 부하 방지를 위해 16 이하 권장.
+        """
+        from concurrent.futures import ThreadPoolExecutor, as_completed
+
+        if not symbols:
+            return {}
+
+        result: Dict[str, dict] = {}
+        with ThreadPoolExecutor(max_workers=min(max_workers, len(symbols))) as ex:
+            future_to_sym = {ex.submit(self.get_realtime_price, sym): sym
+                             for sym in symbols}
+            for fut in as_completed(future_to_sym):
+                sym  = future_to_sym[fut]
+                try:
+                    data = fut.result()
+                    if data:
+                        result[sym] = data
+                except Exception as e:
+                    logger.debug(f"{sym} 병렬 실시간 조회 실패: {e}")
+        return result

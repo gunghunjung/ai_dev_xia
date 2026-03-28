@@ -18,6 +18,7 @@ class GPUPanel:
         self.frame = ttk.Frame(parent)
         self._history: Dict[str, List[float]] = {
             "util_gpu": [], "util_mem": [], "temp": [], "power": [],
+            "cuda_alloc_pct": [],   # CUDA 할당 메모리 % (전체 VRAM 대비)
         }
         self._max_history = 60
         self._lock = threading.Lock()
@@ -61,7 +62,7 @@ class GPUPanel:
             card["frame"].grid_remove()  # 기본 숨김
 
         # 실시간 그래프
-        graph_fr = ttk.LabelFrame(self.frame, text="실시간 GPU 사용률 (최근 60초)",
+        graph_fr = ttk.LabelFrame(self.frame, text="실시간 GPU / CUDA 사용률 (최근 60초)",
                                    padding=4)
         graph_fr.pack(fill="both", expand=True, padx=8, pady=4)
 
@@ -74,7 +75,7 @@ class GPUPanel:
         legend_fr = ttk.Frame(graph_fr)
         legend_fr.pack(fill="x", pady=(4, 0))
         items = [("GPU 사용률", "#89b4fa"), ("VRAM 사용률", "#a6e3a1"),
-                 ("온도", "#fab387"), ("전력", "#f9e2af")]
+                 ("CUDA 할당", "#cba6f7"), ("온도", "#fab387"), ("전력", "#f9e2af")]
         for i, (label, color) in enumerate(items):
             tk.Label(legend_fr, text="━", fg=color, bg="#181825",
                      font=("Consolas", 12)).grid(row=0, column=i*2, padx=(8, 0))
@@ -105,19 +106,26 @@ class GPUPanel:
             pb.grid(row=i, column=2, padx=(4, 0))
             gauges[key + "_pb"] = pb
 
-        # VRAM 상세
+        # VRAM 상세 (pynvml)
         vram_var = tk.StringVar(value="—")
         gauges["vram_detail"] = vram_var
         ttk.Label(fr, textvariable=vram_var,
                   font=("Consolas", 8), foreground="#9399b2").grid(
             row=len(gauge_items), column=0, columnspan=3, sticky="w", pady=(4, 0))
 
+        # CUDA (PyTorch) 메모리
+        cuda_var = tk.StringVar(value="CUDA: —")
+        gauges["cuda_detail"] = cuda_var
+        ttk.Label(fr, textvariable=cuda_var,
+                  font=("Consolas", 8), foreground="#cba6f7").grid(
+            row=len(gauge_items)+1, column=0, columnspan=3, sticky="w", pady=(0, 2))
+
         # GPU 이름
         name_var = tk.StringVar(value="—")
         gauges["name_var"] = name_var
         ttk.Label(fr, textvariable=name_var,
                   font=("맑은 고딕", 9), foreground="#cba6f7").grid(
-            row=len(gauge_items)+1, column=0, columnspan=3, sticky="w")
+            row=len(gauge_items)+2, column=0, columnspan=3, sticky="w")
 
         return {"frame": fr, **gauges}
 
@@ -133,8 +141,11 @@ class GPUPanel:
             self._history["temp"].append(s["temperature"])
             pwr_pct = s["power_w"] / max(s.get("power_limit_w", 250) or 250, 1) * 100
             self._history["power"].append(min(pwr_pct, 100))
+            alloc_pct = (s.get("cuda_allocated_mb", 0.0)
+                         / max(s.get("mem_total_mb", 1.0), 1.0) * 100)
+            self._history["cuda_alloc_pct"].append(min(alloc_pct, 100))
 
-            # 최대 길이 유지
+            # 최대 길이 유지 (히스토리 키 추가돼도 안전하게 처리)
             for k in self._history:
                 if len(self._history[k]) > self._max_history:
                     self._history[k] = self._history[k][-self._max_history:]
@@ -171,6 +182,13 @@ class GPUPanel:
                 f"VRAM: {s['mem_used_mb']:.0f}/{s['mem_total_mb']:.0f} MB "
                 f"({s['mem_used_mb']/max(s['mem_total_mb'],1)*100:.0f}%)"
             )
+            alloc  = s.get("cuda_allocated_mb", 0.0)
+            reserv = s.get("cuda_reserved_mb", 0.0)
+            total  = s.get("mem_total_mb", 1.0)
+            card["cuda_detail"].set(
+                f"CUDA 할당: {alloc:.0f} MB  예약: {reserv:.0f} MB "
+                f"({alloc/max(total,1)*100:.1f}%)"
+            )
             card["name_var"].set(s["name"][:28])
 
     def _redraw_graph(self) -> None:
@@ -195,10 +213,11 @@ class GPUPanel:
                                fill="#9399b2", font=("Consolas", 8), anchor="e")
 
         series = [
-            ("util_gpu", "#89b4fa"),
-            ("util_mem", "#a6e3a1"),
-            ("temp", "#fab387"),
-            ("power", "#f9e2af"),
+            ("util_gpu",       "#89b4fa"),
+            ("util_mem",       "#a6e3a1"),
+            ("cuda_alloc_pct", "#cba6f7"),
+            ("temp",           "#fab387"),
+            ("power",          "#f9e2af"),
         ]
 
         with self._lock:

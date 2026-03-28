@@ -173,9 +173,11 @@ class ROIDetector:
 
         for idx in roi_indices:
             # 레이블: lookahead일 후 수익률 (log return)
-            future_price = close[idx + self.lookahead]
+            # IMPORTANT: 분모에 1e-10을 더해 zero-division 방어.
+            # 비율(ratio)에 더하면 수식이 틀림 → 정확한 log(P_t+k / P_t) 계산.
+            future_price  = close[idx + self.lookahead]
             current_price = close[idx]
-            label_ret = np.log(future_price / current_price + 1e-10)
+            label_ret = np.log(future_price / (current_price + 1e-10))
             label_dir = 1 if label_ret > 0 else 0
 
             # 가장 강한 트리거 이름

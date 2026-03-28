@@ -22,7 +22,7 @@
       "004370.KS"
     ],
     "benchmark": "^KS11",
-    "period": "10y",
+    "period": "5y",
     "interval": "1d",
     "cache_dir": "cache",
     "cache_ttl_hours": 23,
@@ -88,10 +88,36 @@
     "vol_lookback": 20,
     "correlation_cap": 0.7
   },
+  "news": {
+    "enabled": true,
+    "db_path": "outputs/news.db",
+    "collect_interval_min": 15,
+    "backfill_days": 7,
+    "max_workers": 8,
+    "news_sources": [
+      "rss",
+      "google",
+      "finnhub",
+      "collector"
+    ],
+    "finnhub_api_key": "",
+    "importance_threshold": 0.7,
+    "shock_threshold": 0.75,
+    "cluster_similarity": 0.75,
+    "decay_lambda": 0.1,
+    "feature_cache_hours": 6,
+    "use_news_in_model": true,
+    "news_feature_dim": 40,
+    "news_embed_dim": 64,
+    "ablation_enabled": true,
+    "news_display_days": 7
+  },
   "model_dir": "outputs/models",
   "output_dir": "outputs",
   "log_level": "INFO",
-  "window_width": 1400,
-  "window_height": 900,
+  "window_width": 1920,
+  "window_height": 1017,
+  "window_x": 495,
+  "window_y": -1988,
   "theme": "light"
 }

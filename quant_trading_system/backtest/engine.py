@@ -50,12 +50,14 @@ class BacktestEngine:
         slippage: float = 0.0005,           # 0.05%
         execution_delay: int = 1,           # 1일 지연 체결
         rebalance_freq: str = "weekly",     # daily/weekly/monthly
+        risk_free_rate: float = 0.035,      # 무위험수익률 (기본: 3.5% 한국 기준금리 근사)
     ):
         self.initial_capital = initial_capital
         self.transaction_cost = transaction_cost
         self.slippage = slippage
         self.execution_delay = execution_delay
         self.rebalance_freq = rebalance_freq
+        self.risk_free_rate = risk_free_rate
 
     # ──────────────────────────────────────────────────
     # 메인 백테스트
@@ -76,7 +78,7 @@ class BacktestEngine:
             benchmark:  벤치마크 수익률 시리즈
             progress_cb: 진행률 콜백 fn(pct: float, msg: str)
         """
-        price_df = price_df.sort_index().ffill()
+        price_df = price_df.sort_index().ffill(limit=5)  # 최대 5일치 gap만 보간 (거래정지/휴일 방어)
         rebal_dates = self._get_rebal_dates(price_df.index)
 
         capital = self.initial_capital
@@ -106,10 +108,17 @@ class BacktestEngine:
                 target_weights = prev_weights
 
             # 리밸런싱 체결 (execution_delay일 후)
+            # CRITICAL: exec_date가 가용 데이터 범위를 벗어나면 주문을 건너뜀.
+            # 같은 날로 fallback 하면 '리밸런싱 신호 당일 바로 체결'이 되어
+            # 미래 데이터 누수(look-ahead bias)가 발생한다.
             exec_date = self._next_trading_day(price_df.index, date,
                                                self.execution_delay)
             if exec_date is None or exec_date not in price_df.index:
-                exec_date = date
+                # 데이터 끝 지점 — 체결 불가, 주문 스킵 (bias-free)
+                logger.debug(f"{date}: exec_date 가용 데이터 없음 → 주문 스킵")
+                equity_history.append({"date": date, "value": portfolio_value})
+                weights_history.append({"date": date, **prev_weights})
+                continue
 
             new_trades, capital, positions = self._rebalance(
                 positions=positions,
@@ -397,18 +406,27 @@ class BacktestEngine:
         return None
 
     def _chain_equity_curves(self, curves: List[pd.Series]) -> pd.Series:
-        """여러 equity curve를 연결 (기준 정규화)"""
+        """여러 equity curve를 연결 (기준 정규화, 중복 날짜 제거)"""
         combined = []
         base = self.initial_capital
+        prev_last_date = None
         for c in curves:
             if len(c) == 0:
                 continue
             normalized = c / c.iloc[0] * base
+            # 이전 윈도우 마지막 날짜와 겹치는 첫 날 제거 (pct_change=0 왜곡 방지)
+            if prev_last_date is not None and normalized.index[0] == prev_last_date:
+                normalized = normalized.iloc[1:]
+            if len(normalized) == 0:
+                continue
             combined.append(normalized)
             base = normalized.iloc[-1]
+            prev_last_date = normalized.index[-1]
         if not combined:
             return pd.Series(dtype=float)
-        return pd.concat(combined)
+        result = pd.concat(combined)
+        # 혹시 남은 중복 인덱스 제거 (안전장치)
+        return result[~result.index.duplicated(keep="last")]
 
     def _compute_metrics(
         self,
@@ -450,8 +468,9 @@ class BacktestEngine:
 
         drawdown = pd.Series(dd_arr, index=equity.index)
 
-        # Sharpe
-        sharpe = cagr / (ann_vol + 1e-10)
+        # Sharpe (무위험수익률 차감 — 기본값 3.5% 한국 기준금리 근사)
+        risk_free = getattr(self, "risk_free_rate", 0.035)
+        sharpe = (cagr - risk_free) / (ann_vol + 1e-10)
 
         # Sortino (하방 변동성 기준)
         downside = returns[returns < 0]

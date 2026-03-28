@@ -21,7 +21,7 @@ class PerformanceEvaluator:
     6. 레짐별 분석: 강세/약세장 구분 성과
     """
 
-    def __init__(self, risk_free_rate: float = 0.03):
+    def __init__(self, risk_free_rate: float = 0.035):  # 3.5% 한국 기준금리 근사 (engine.py와 통일)
         self.rf = risk_free_rate
 
     # ──────────────────────────────────────────────────

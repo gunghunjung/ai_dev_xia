@@ -1,2 +1,4 @@
 from .constructor import PortfolioConstructor
-__all__ = ["PortfolioConstructor"]
+from .manager import PortfolioManager, Portfolio
+
+__all__ = ["PortfolioConstructor", "PortfolioManager", "Portfolio"]

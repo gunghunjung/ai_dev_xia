@@ -1,0 +1,37 @@
+import pygame
+
+WIDTH = 1280
+HEIGHT = 720
+FPS = 60
+TITLE = 'Ashfall Protocol'
+
+WORLD_WIDTH = 2400
+WORLD_HEIGHT = 1600
+
+BG_COLOR        = (26, 24, 22)
+GRID_COLOR      = (42, 38, 34)
+RUBBLE_COLOR    = (60, 55, 50)
+TEXT_COLOR      = (230, 222, 205)
+ACCENT_COLOR    = (255, 179, 71)
+DANGER_COLOR    = (219, 71, 71)
+HEAL_COLOR      = (73, 208, 130)
+PANEL_COLOR     = (18, 18, 18)
+
+PLAYER_SPEED    = 270
+PLAYER_RADIUS   = 18
+PLAYER_MAX_HP   = 100
+PLAYER_IFRAME   = 0.35
+
+BULLET_SPEED    = 950
+BULLET_RADIUS   = 4
+BULLET_LIFETIME = 0.9
+
+CAMERA_LERP         = 0.14
+SCREEN_SHAKE_DECAY  = 8.0
+
+WAVE_BREAK_TIME = 2.2
+FONT_NAME = None
+
+
+def vec(x=0, y=0):
+    return pygame.math.Vector2(x, y)
