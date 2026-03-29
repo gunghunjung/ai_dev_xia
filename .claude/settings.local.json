@@ -72,7 +72,15 @@
       "Bash(grep -E \"\\\\.\\(md|txt|json|yaml|yml|sh\\)$|requirements|setup|Makefile\")",
       "Bash(python -c \"import PyInstaller; print\\(PyInstaller.__version__\\)\")",
       "Bash(pyinstaller AshfallProtocol.spec --clean)",
-      "Bash(find F:/dev/ai_dev/ai_dev_xia/media_player -name \"*.pyc\" -delete)"
+      "Bash(find F:/dev/ai_dev/ai_dev_xia/media_player -name \"*.pyc\" -delete)",
+      "Bash(python main.py --targets 3 --duration 120 --mode single --guidance PN --no-plot --quiet)",
+      "Bash(python main.py --targets 3 --mode single --guidance PN --no-plot)",
+      "Bash(python main.py --targets 5 --mode single --guidance PN --no-plot)",
+      "Bash(python main.py --targets 4 --mode montecarlo --trials 50 --no-plot)",
+      "Bash(python -m pytest tests/test_simulation.py -v --tb=short)",
+      "Bash(python main.py --targets 4 --mode single --guidance PN --no-plot --save-csv results/trajectory.csv --seed 42)",
+      "Bash(python main.py --targets 4 --mode montecarlo --trials 100 --no-plot --save-csv results/montecarlo.csv)",
+      "Bash(python main.py --targets 4 --mode compare --no-plot --seed 77)"
     ]
   }
 }
