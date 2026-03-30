@@ -1,3 +1,4 @@
 from .loader import DataLoader
 from .cache import CacheManager
-__all__ = ["DataLoader", "CacheManager"]
+from .realtime import RealtimeFetcher
+__all__ = ["DataLoader", "CacheManager", "RealtimeFetcher"]

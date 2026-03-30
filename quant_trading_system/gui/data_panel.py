@@ -9,6 +9,7 @@ sys.path.insert(0, BASE_DIR)
 
 from config import AppSettings
 from data import DataLoader
+from data.realtime import RealtimeFetcher
 from data.korean_stocks import get_info, get_name
 from gui.stock_search_dialog import StockSearchDialog
 from gui.tooltip import add_tooltip
@@ -17,6 +18,10 @@ logger = logging.getLogger("quant.gui.data")
 
 PERIODS   = {"1년": "1y", "2년": "2y", "5년": "5y", "최대": "max"}
 INTERVALS = {"일봉": "1d", "주봉": "1wk"}
+
+# 실시간 갱신 주기 (표시명 → 초)
+RT_INTERVALS = {"3초": 3, "5초": 5, "10초": 10, "15초": 15,
+                "30초": 30, "1분": 60, "3분": 180, "5분": 300}
 
 
 class DataPanel:
@@ -39,8 +44,17 @@ class DataPanel:
             (t, get_name(t)) for t in settings.data.symbols
         ]
 
+        # 실시간 시세 관련
+        self._rt_fetcher   = RealtimeFetcher(cache_sec=2)
+        self._rt_thread: threading.Thread | None = None
+        self._rt_stop      = threading.Event()
+        self._rt_running   = False
+
         self.frame = ttk.Frame(parent)
         self._build()
+
+        # 프로그램 시작 시 자동으로 실시간 갱신 시작
+        self.frame.after(500, self._start_realtime)
 
     # ─────────────────────────────────────────────
     # UI 구성
@@ -211,12 +225,12 @@ class DataPanel:
 
         # 데이터 미리보기 테이블
         tree_fr = ttk.Frame(parent)
-        tree_fr.pack(fill="both", expand=True)
+        tree_fr.pack(fill="x")
 
         cols = ("종목코드", "종목명", "행수", "시작일", "종료일",
                 "최근종가", "등락률", "시장", "상태")
         self.data_tree = ttk.Treeview(tree_fr, columns=cols,
-                                      show="headings", height=14)
+                                      show="headings", height=5)
         col_widths = [110, 120, 70, 90, 90, 90, 70, 70, 70]
         for c, w in zip(cols, col_widths):
             self.data_tree.heading(c, text=c)
@@ -228,7 +242,7 @@ class DataPanel:
         vsb = ttk.Scrollbar(tree_fr, orient="vertical",
                             command=self.data_tree.yview)
         self.data_tree.configure(yscrollcommand=vsb.set)
-        self.data_tree.pack(side="left", fill="both", expand=True)
+        self.data_tree.pack(side="left", fill="x", expand=True)
         vsb.pack(side="right", fill="y")
 
         # 로그
@@ -237,10 +251,13 @@ class DataPanel:
                  bg="#1e1e2e", fg="#9399b2",
                  font=("맑은 고딕", 9)).pack(anchor="w", pady=(6, 2))
         self.log_box = scrolledtext.ScrolledText(
-            parent, height=7, bg="#181825", fg="#a6adc8",
+            parent, height=3, bg="#181825", fg="#a6adc8",
             font=("Consolas", 9), relief="flat", state="disabled",
         )
         self.log_box.pack(fill="x")
+
+        # ── 실시간 시세 모니터 ─────────────────────────
+        self._build_realtime(parent)
 
     # ─────────────────────────────────────────────
     # 종목 관리
@@ -320,6 +337,9 @@ class DataPanel:
         """포트폴리오를 settings에 동기화"""
         self.settings.data.symbols = [t for t, _ in self._portfolio]
         self.on_change(self.settings)
+        # 실시간 테이블 종목 목록도 갱신
+        if hasattr(self, "_rt_rows"):
+            self._init_rt_table()
 
     # ─────────────────────────────────────────────
     # 데이터 다운로드
@@ -423,6 +443,191 @@ class DataPanel:
                 vals[2] = status
                 self.port_tree.item(ticker, values=vals, tags=(tag,))
         self.frame.after(0, _do)
+
+    # ─────────────────────────────────────────────
+    # 실시간 시세 모니터 UI
+    # ─────────────────────────────────────────────
+
+    def _build_realtime(self, parent):
+        """실시간 시세 모니터 섹션 구성"""
+        rt_fr = ttk.LabelFrame(
+            parent,
+            text="📡  실시간 시세 모니터  (장중 자동 갱신)",
+            padding=6,
+        )
+        rt_fr.pack(fill="both", expand=True, pady=(8, 0))
+
+        # 상단 컨트롤 행
+        ctrl = ttk.Frame(rt_fr)
+        ctrl.pack(fill="x", pady=(0, 4))
+
+        ttk.Label(ctrl, text="갱신 주기:").pack(side="left", padx=(0, 4))
+        self._rt_interval_var = tk.StringVar(value="5초")
+        rt_cb = ttk.Combobox(
+            ctrl, textvariable=self._rt_interval_var,
+            values=list(RT_INTERVALS), width=6, state="readonly",
+        )
+        rt_cb.pack(side="left", padx=(0, 8))
+        add_tooltip(rt_cb, "실시간 시세를 몇 초/분마다 갱신할지 설정합니다.\n\n"
+                    "3초 / 5초: 빠른 갱신 (yfinance API 요청 빈번)\n"
+                    "10초 / 15초: 균형 잡힌 갱신 속도 (추천)\n"
+                    "30초 이상: 부하 최소화")
+
+        self._rt_btn = ttk.Button(
+            ctrl, text="▶ 시작",
+            command=self._toggle_realtime,
+            style="Accent.TButton",
+            width=8,
+        )
+        self._rt_btn.pack(side="left", padx=(0, 8))
+        add_tooltip(self._rt_btn, "실시간 시세 자동 갱신을 시작/중지합니다.")
+
+        self._rt_status_var = tk.StringVar(value="중지됨")
+        self._rt_status_lbl = tk.Label(
+            ctrl, textvariable=self._rt_status_var,
+            bg="#1e1e2e", fg="#9399b2",
+            font=("맑은 고딕", 9),
+        )
+        self._rt_status_lbl.pack(side="left")
+
+        # 실시간 시세 테이블
+        rt_tree_fr = ttk.Frame(rt_fr)
+        rt_tree_fr.pack(fill="both", expand=True)
+
+        cols = ("종목코드", "종목명", "현재가", "등락", "등락률", "업데이트")
+        self._rt_tree = ttk.Treeview(
+            rt_tree_fr, columns=cols, show="headings", height=12,
+        )
+        widths = [110, 120, 100, 90, 80, 80]
+        anchors = ["center", "w", "e", "e", "e", "center"]
+        for c, w, a in zip(cols, widths, anchors):
+            self._rt_tree.heading(c, text=c)
+            self._rt_tree.column(c, width=w, anchor=a)
+
+        self._rt_tree.tag_configure("up",      foreground="#f38ba8")  # 상승: 빨강
+        self._rt_tree.tag_configure("down",    foreground="#89b4fa")  # 하락: 파랑
+        self._rt_tree.tag_configure("flat",    foreground="#a6adc8")
+        self._rt_tree.tag_configure("stale",   foreground="#6c7086")  # 오래된 데이터
+
+        rt_vsb = ttk.Scrollbar(rt_tree_fr, orient="vertical",
+                               command=self._rt_tree.yview)
+        self._rt_tree.configure(yscrollcommand=rt_vsb.set)
+        self._rt_tree.pack(side="left", fill="both", expand=True)
+        rt_vsb.pack(side="right", fill="y")
+
+        # 종목 목록 변경 시 실시간 테이블도 초기화
+        self._rt_rows: dict[str, str] = {}   # symbol → iid
+        self._init_rt_table()
+
+    def _init_rt_table(self):
+        """포트폴리오 종목으로 실시간 테이블 행 초기화"""
+        self._rt_tree.delete(*self._rt_tree.get_children())
+        self._rt_rows = {}
+        for ticker, name in self._portfolio:
+            iid = self._rt_tree.insert(
+                "", "end",
+                values=(ticker, name, "—", "—", "—", "—"),
+                tags=("flat",),
+            )
+            self._rt_rows[ticker] = iid
+
+    def _toggle_realtime(self):
+        """실시간 갱신 시작/중지 토글"""
+        if self._rt_running:
+            self._stop_realtime()
+        else:
+            self._start_realtime()
+
+    def _start_realtime(self):
+        if self._rt_running:
+            return
+        if not self._portfolio:
+            messagebox.showwarning("알림", "등록된 종목이 없습니다.\n먼저 종목을 추가하세요.",
+                                   parent=self.frame)
+            return
+
+        self._init_rt_table()   # 현재 포트폴리오로 행 재구성
+        self._rt_stop.clear()
+        self._rt_running = True
+        self._rt_btn.config(text="■ 중지")
+        self._rt_status_lbl.config(fg="#a6e3a1")
+        self._rt_status_var.set("갱신 중...")
+
+        self._rt_thread = threading.Thread(
+            target=self._realtime_loop, daemon=True,
+        )
+        self._rt_thread.start()
+
+    def _stop_realtime(self):
+        self._rt_stop.set()
+        self._rt_running = False
+        self._rt_btn.config(text="▶ 시작")
+        self._rt_status_lbl.config(fg="#9399b2")
+        self._rt_status_var.set("중지됨")
+
+    def _realtime_loop(self):
+        """백그라운드 스레드: 주기적으로 시세 조회 후 UI 업데이트"""
+        while not self._rt_stop.is_set():
+            symbols = [t for t, _ in self._portfolio]
+            if not symbols:
+                self._rt_stop.wait(timeout=5)
+                continue
+
+            results = self._rt_fetcher.fetch_all(symbols)
+            self.frame.after(0, lambda r=results: self._update_rt_table(r))
+
+            interval_sec = RT_INTERVALS.get(self._rt_interval_var.get(), 5)
+            # 짧은 단위로 쪼개서 wait → 주기 변경 즉시 반영, 빠른 중지 가능
+            elapsed = 0.0
+            while elapsed < interval_sec and not self._rt_stop.is_set():
+                self._rt_stop.wait(timeout=1.0)
+                elapsed += 1.0
+
+        # 스레드 종료 시 상태 초기화
+        self.frame.after(0, lambda: self._rt_status_var.set("중지됨"))
+
+    def _update_rt_table(self, results: dict):
+        """시세 조회 결과로 실시간 테이블 갱신"""
+        from datetime import datetime
+        now_str = datetime.now().strftime("%H:%M:%S")
+
+        success = 0
+        for sym, snap in results.items():
+            iid = self._rt_rows.get(sym)
+            if iid is None:
+                continue
+            name = next((n for t, n in self._portfolio if t == sym), sym)
+
+            if snap is None:
+                self._rt_tree.item(iid, values=(
+                    sym, name, "오류", "—", "—", now_str,
+                ), tags=("stale",))
+                continue
+
+            price_str  = f"{snap.price:,.0f}"
+            change_str = f"{snap.change:+,.0f}"
+            pct_str    = f"{snap.change_pct:+.2%}"
+            ts_str     = snap.fetched_str
+
+            if snap.stale:
+                tag = "stale"
+            elif snap.change > 0:
+                tag = "up"
+            elif snap.change < 0:
+                tag = "down"
+            else:
+                tag = "flat"
+
+            self._rt_tree.item(iid, values=(
+                sym, name, price_str, change_str, pct_str, ts_str,
+            ), tags=(tag,))
+            success += 1
+
+        interval_label = self._rt_interval_var.get()
+        self._rt_status_var.set(
+            f"마지막 갱신: {now_str}  ({success}/{len(results)}개)  "
+            f"— {interval_label}마다 갱신"
+        )
 
     def _clear_cache(self):
         from data.cache import CacheManager

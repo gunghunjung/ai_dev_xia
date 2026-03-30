@@ -22,7 +22,7 @@
       "004370.KS"
     ],
     "benchmark": "^KS11",
-    "period": "10y",
+    "period": "5y",
     "interval": "1d",
     "cache_dir": "cache",
     "cache_ttl_hours": 23,

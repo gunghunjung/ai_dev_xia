@@ -83,6 +83,7 @@ class MainWindow:
         h = self.settings.window_height
         self.root.geometry(f"{w}x{h}")
         self.root.minsize(1100, 720)
+        self.root.state("zoomed")   # 전체화면(최대화)으로 시작
 
         # 스타일
         style = ttk.Style()
@@ -493,6 +494,9 @@ class MainWindow:
     def _on_close(self):
         """종료 처리"""
         self.gpu_monitor.stop()
+        # 실시간 시세 스레드 정리
+        if hasattr(self, "data_panel") and hasattr(self.data_panel, "_stop_realtime"):
+            self.data_panel._stop_realtime()
         self._save_settings()
         self.root.destroy()
 
