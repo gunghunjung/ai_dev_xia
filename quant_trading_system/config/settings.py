@@ -112,6 +112,36 @@ class RiskConfig:
 
 
 @dataclass
+class NewsConfig:
+    """뉴스 AI 외부환경 모듈 설정"""
+    enabled:              bool  = True           # 뉴스 모듈 활성화 여부
+    db_path:              str   = "outputs/news.db"  # SQLite DB 경로
+    collect_interval_min: int   = 15             # 자동 수집 간격 (분)
+    backfill_days:        int   = 7              # 초기 백필 일수
+    max_workers:          int   = 8              # 병렬 수집 스레드 수
+    # 소스 선택 (rss / google / finnhub / collector)
+    news_sources:         List[str] = field(default_factory=lambda: ["rss", "google"])
+    # Finnhub API 키 (https://finnhub.io/register 에서 무료 발급)
+    finnhub_api_key:      str   = ""
+    # 2단계 분석 임계값
+    importance_threshold: float = 0.7            # 본문 심화 분석 임계값
+    shock_threshold:      float = 0.75           # 충격 이벤트 임계값
+    # 클러스터링
+    cluster_similarity:   float = 0.75           # 중복 제거 유사도 임계값
+    # 특징 벡터
+    decay_lambda:         float = 0.1            # 시간 감쇠 계수 λ
+    feature_cache_hours:  int   = 6              # 특징 캐시 유효시간
+    # 모델 통합
+    use_news_in_model:    bool  = True           # 예측 모델에 뉴스 피처 주입 여부
+    news_feature_dim:     int   = 40             # NewsFeatureEncoder 입력 차원
+    news_embed_dim:       int   = 64             # NewsFeatureEncoder 출력 차원
+    # 검증
+    ablation_enabled:     bool  = True           # 뉴스 효과 A/B 검증 실행 여부
+    # UI 표시 기간
+    news_display_days:    int   = 3650           # 외부환경 패널 기본 조회 기간 (일)
+
+
+@dataclass
 class AppSettings:
     """전체 애플리케이션 설정"""
     data: DataConfig = field(default_factory=DataConfig)
@@ -120,15 +150,18 @@ class AppSettings:
     portfolio: PortfolioConfig = field(default_factory=PortfolioConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
     risk: RiskConfig = field(default_factory=RiskConfig)
+    news: NewsConfig = field(default_factory=NewsConfig)
 
     # 경로 설정
     model_dir: str = "outputs/models"
     output_dir: str = "outputs"
     log_level: str = "INFO"
 
-    # GUI 설정
-    window_width: int = 1400
+    # GUI 설정 — 크기와 위치 모두 저장
+    window_width:  int = 1400
     window_height: int = 900
+    window_x:      int = -1    # -1 = 시스템 기본값
+    window_y:      int = -1
     theme: str = "light"
 
 
@@ -163,11 +196,15 @@ def load_settings(path: str = _SETTINGS_PATH) -> AppSettings:
         portfolio=PortfolioConfig(**defaults["portfolio"]),
         backtest=BacktestConfig(**defaults["backtest"]),
         risk=RiskConfig(**defaults["risk"]),
+        news=NewsConfig(**{k: v for k, v in defaults.get("news", {}).items()
+                          if k in NewsConfig.__dataclass_fields__}),
         model_dir=defaults["model_dir"],
         output_dir=defaults["output_dir"],
         log_level=defaults["log_level"],
         window_width=defaults["window_width"],
         window_height=defaults["window_height"],
+        window_x=defaults.get("window_x", -1),
+        window_y=defaults.get("window_y", -1),
         theme=defaults["theme"],
     )
     return s

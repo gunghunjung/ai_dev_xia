@@ -3,6 +3,7 @@ from __future__ import annotations
 import os, sys, threading, tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import logging
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
@@ -33,11 +34,18 @@ class DataPanel:
     - 미리보기 테이블
     """
 
-    def __init__(self, parent, settings: AppSettings, on_change):
+    def __init__(self, parent, settings: AppSettings, on_change,
+                 on_data_downloaded=None):
         self.settings = settings
         self.on_change = on_change
+        self._on_data_downloaded = on_data_downloaded   # 다운로드 완료 전용 콜백
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
+        self._rt_thread: threading.Thread | None = None
+        self._rt_fetching = False
+        self._rt_after_id: str | None = None
+        self._rt_auto_on  = tk.BooleanVar(value=False)
+        self._rt_interval = tk.StringVar(value="30초")
 
         # 현재 등록된 종목 목록: [(ticker, name), ...]
         self._portfolio: list[tuple[str, str]] = [
@@ -83,8 +91,8 @@ class DataPanel:
 
         left  = ttk.LabelFrame(pane, text="① 종목 목록 관리", padding=8)
         right = ttk.LabelFrame(pane, text="② 다운로드 결과 미리보기", padding=8)
-        pane.add(left,  minsize=300)
-        pane.add(right, minsize=640)
+        pane.add(left,  minsize=240)
+        pane.add(right, minsize=480)
 
         self._build_left(left)
         self._build_right(right)
@@ -132,7 +140,7 @@ class DataPanel:
 
         cols = ("ticker", "name", "status")
         self.port_tree = ttk.Treeview(list_fr, columns=cols,
-                                      show="headings", height=14,
+                                      show="headings", height=6,
                                       selectmode="extended")
         self.port_tree.heading("ticker", text="종목코드")
         self.port_tree.heading("name",   text="종목명")
@@ -198,12 +206,52 @@ class DataPanel:
                     "저장된 캐시 데이터를 삭제합니다.\n"
                     "다음 다운로드 시 최신 데이터를 새로 받아옵니다.")
 
+        # 실시간 현재가 버튼 행
+        rt_fr = ttk.Frame(parent)
+        rt_fr.pack(fill="x", pady=(6, 0))
+
+        self._rt_btn = ttk.Button(rt_fr, text="📡 현재가 조회",
+                                  command=self._fetch_realtime,
+                                  style="Accent.TButton")
+        self._rt_btn.pack(side="left", padx=(0, 4))
+        add_tooltip(self._rt_btn,
+                    "등록된 종목의 현재가를 yfinance로 즉시 조회합니다.\n"
+                    "(약 15분 지연 · 다운로드 없이 빠르게 확인)")
+
+        ttk.Label(rt_fr, text="자동:").pack(side="left", padx=(6, 2))
+        rt_interval_cb = ttk.Combobox(rt_fr, textvariable=self._rt_interval,
+                                      values=["15초", "30초", "1분", "5분"],
+                                      width=5, state="readonly")
+        rt_interval_cb.pack(side="left", padx=(0, 3))
+        self._rt_auto_chk = ttk.Checkbutton(
+            rt_fr, text="자동갱신", variable=self._rt_auto_on,
+            command=self._toggle_rt_auto)
+        self._rt_auto_chk.pack(side="left")
+        add_tooltip(self._rt_auto_chk, "켜면 선택 간격으로 현재가를 자동 갱신합니다.")
+
+        self._rt_status_var = tk.StringVar(value="")
+        ttk.Label(rt_fr, textvariable=self._rt_status_var,
+                  foreground="#9399b2",
+                  font=("맑은 고딕", 8)).pack(side="left", padx=(6, 0))
+
         # 진행 상태
-        self.progress = ttk.Progressbar(parent, mode="indeterminate")
+        self.progress = ttk.Progressbar(parent, mode="determinate",
+                                        maximum=100, value=0)
         self.progress.pack(fill="x", pady=(8, 2))
         self.status_var = tk.StringVar(value="준비 — 종목을 추가하고 '데이터 다운로드'를 누르세요")
         ttk.Label(parent, textvariable=self.status_var,
                   font=("맑은 고딕", 9)).pack(anchor="w")
+
+        # 다운로드 완료 후 "다음 단계" 안내 배너 (초기에는 숨김)
+        self._next_step_bar = tk.Frame(parent, bg="#1a3a1a", height=0)
+        self._next_step_bar.pack(fill="x", pady=(4, 0))
+        self._next_step_bar.pack_propagate(False)
+        tk.Label(
+            self._next_step_bar,
+            text="✅  데이터 업데이트 완료!  →  🧠 학습 탭에서 모델을 재학습하고  →  🔮 예측 탭에서 예측을 갱신하세요",
+            bg="#1a3a1a", fg="#a6e3a1",
+            font=("맑은 고딕", 9, "bold"), anchor="w",
+        ).pack(fill="both", expand=True, padx=10)
 
     def _build_right(self, parent):
         # 요약 카드
@@ -228,16 +276,23 @@ class DataPanel:
         tree_fr.pack(fill="x")
 
         cols = ("종목코드", "종목명", "행수", "시작일", "종료일",
-                "최근종가", "등락률", "시장", "상태")
+                "현재가", "전일비", "등락률", "시장", "상태")
         self.data_tree = ttk.Treeview(tree_fr, columns=cols,
+<<<<<<< HEAD
                                       show="headings", height=5)
         col_widths = [110, 120, 70, 90, 90, 90, 70, 70, 70]
+=======
+                                      show="headings", height=8)
+        col_widths = [110, 120, 60, 90, 90, 90, 80, 72, 60, 60]
+>>>>>>> fc3701554ef854ff18ab2cb7f0bca37a9183375d
         for c, w in zip(cols, col_widths):
             self.data_tree.heading(c, text=c)
             self.data_tree.column(c, width=w, anchor="center")
         self.data_tree.column("종목명", anchor="w")
         self.data_tree.tag_configure("ok",    foreground="#a6e3a1")
         self.data_tree.tag_configure("fail",  foreground="#f38ba8")
+        self.data_tree.tag_configure("rt_up",   foreground="#a6e3a1")
+        self.data_tree.tag_configure("rt_down", foreground="#f38ba8")
 
         vsb = ttk.Scrollbar(tree_fr, orient="vertical",
                             command=self.data_tree.yview)
@@ -360,7 +415,7 @@ class DataPanel:
         self._sync_settings()
 
         self._stop_event.clear()
-        self.progress.start(10)
+        self.progress["value"] = 0
         self._thread = threading.Thread(
             target=self._download_thread,
             args=(list(self._portfolio), period, interval),
@@ -375,12 +430,15 @@ class DataPanel:
         self.frame.after(0, lambda: self.data_tree.delete(*self.data_tree.get_children()))
 
         total_rows, starts, ends = 0, [], []
+        n_total = len(portfolio)
 
-        for ticker, name in portfolio:
+        for i, (ticker, name) in enumerate(portfolio):
             if self._stop_event.is_set():
                 break
 
-            self._set_status(f"다운로드: {ticker} ({name})")
+            pct = int(i / n_total * 100)
+            self.frame.after(0, lambda p=pct: self.progress.configure(value=p))
+            self._set_status(f"({i+1}/{n_total}) 다운로드: {ticker} ({name})")
             self._log(f"[{ticker}] {name} 로드 시작...")
 
             try:
@@ -389,7 +447,8 @@ class DataPanel:
                 self._log(f"[{ticker}] 오류: {e}")
                 self._update_port_status(ticker, "❌")
                 self.frame.after(0, lambda t=ticker, n=name: self.data_tree.insert(
-                    "", "end", values=(t, n, "0", "—", "—", "—", "—", "—", "❌ 실패"),
+                    "", "end", iid=t,
+                    values=(t, n, "0", "—", "—", "—", "—", "—", "—", "❌ 실패"),
                     tags=("fail",)
                 ))
                 continue
@@ -398,42 +457,74 @@ class DataPanel:
                 self._log(f"[{ticker}] 데이터 없음 — 종목코드 확인 필요")
                 self._update_port_status(ticker, "❌")
                 self.frame.after(0, lambda t=ticker, n=name: self.data_tree.insert(
-                    "", "end", values=(t, n, "0", "—", "—", "—", "—", "—", "❌ 없음"),
+                    "", "end", iid=t,
+                    values=(t, n, "0", "—", "—", "—", "—", "—", "—", "❌ 없음"),
                     tags=("fail",)
                 ))
                 continue
 
-            # 정상
+            # 정상 — 히스토리컬 마지막 종가
             info     = get_info(ticker) or {}
             market   = info.get("market", "—")
-            last_cls = df["Close"].iloc[-1] if "Close" in df.columns else 0
-            prev_cls = df["Close"].iloc[-2] if len(df) > 1 else last_cls
-            last_ret = (last_cls - prev_cls) / (prev_cls + 1e-10) if prev_cls else 0
+            hist_cls = df["Close"].iloc[-1] if "Close" in df.columns else 0
+            hist_end = str(df.index[-1].date())
 
             total_rows += len(df)
             starts.append(str(df.index[0].date()))
-            ends.append(str(df.index[-1].date()))
+            ends.append(hist_end)
+
+            # 실시간 현재가 조회 (실패해도 히스토리 값으로 대체)
+            rt = loader.get_realtime_price(ticker)
+            if rt and rt.get("price"):
+                cur    = rt["currency"] or ""
+                price  = rt["price"]
+                chg    = rt.get("change", 0) or 0
+                chgp   = rt.get("change_pct", 0) or 0
+                sign   = "+" if chg >= 0 else ""
+                price_str = f"{price:,.0f}" if cur in ("KRW", "") else f"{price:,.2f}"
+                chg_str   = f"{sign}{chg:,.0f}" if cur in ("KRW", "") else f"{sign}{chg:,.2f}"
+                chgp_str  = f"{sign}{chgp:.2f}%"
+                rt_tag    = "rt_up" if chg > 0 else ("rt_down" if chg < 0 else "ok")
+                self._log(f"[{ticker}] 현재가: {price_str}  ({chgp_str})")
+            else:
+                # 실시간 조회 실패 시 히스토리 마지막 값 사용
+                price_str = f"{hist_cls:,.0f}"
+                chg_str   = "—"
+                chgp_str  = "—"
+                rt_tag    = "ok"
 
             row = (ticker, name, f"{len(df):,}",
-                   str(df.index[0].date()), str(df.index[-1].date()),
-                   f"{last_cls:,.0f}", f"{last_ret:+.2%}",
+                   str(df.index[0].date()), hist_end,
+                   price_str, chg_str, chgp_str,
                    market, "✅ 완료")
             self._update_port_status(ticker, "✅")
             self._log(f"[{ticker}] {name}: {len(df):,}행 완료")
-            self.frame.after(0, lambda r=row: self.data_tree.insert(
-                "", "end", values=r, tags=("ok",)
+            self.frame.after(0, lambda r=row, tg=rt_tag: self.data_tree.insert(
+                "", "end", iid=r[0], values=r, tags=(tg,)
             ))
 
         # 요약 업데이트
-        n = len(portfolio)
-        self.frame.after(0, lambda: (
-            self.summary_vars["n"].set(str(n)),
-            self.summary_vars["rows"].set(f"{total_rows:,}"),
-            self.summary_vars["start"].set(min(starts) if starts else "—"),
-            self.summary_vars["end"].set(max(ends) if ends else "—"),
-        ))
-        self.frame.after(0, self.progress.stop)
-        self._set_status(f"다운로드 완료: {n}개 종목")
+        n = n_total
+        def _finish():
+            self.summary_vars["n"].set(str(n))
+            self.summary_vars["rows"].set(f"{total_rows:,}")
+            self.summary_vars["start"].set(min(starts) if starts else "—")
+            self.summary_vars["end"].set(max(ends) if ends else "—")
+            self.progress.configure(value=100)
+        self.frame.after(0, _finish)
+        self._set_status(f"다운로드 완료: {n}개 종목 ✅  (현재가 포함)")
+        now = datetime.now().strftime("%H:%M:%S")
+        self.frame.after(0, lambda: self._rt_status_var.set(f"최종: {now}"))
+
+        # 다음 단계 안내 배너 표시
+        self.frame.after(0, lambda: self._next_step_bar.configure(height=32))
+
+        # 다운로드 완료 → 메인 윈도우에 알림 (신선도 알람 즉시 재검사용)
+        self.frame.after(500, lambda: self.on_change(self.settings))
+
+        # 학습/예측 탭 업데이트 알림 전용 콜백
+        if self._on_data_downloaded:
+            self.frame.after(600, self._on_data_downloaded)
 
     def _update_port_status(self, ticker: str, status: str):
         tag = "ok" if "✅" in status else "error"
@@ -650,3 +741,102 @@ class DataPanel:
             self.log_box.see("end")
             self.log_box.config(state="disabled")
         self.frame.after(0, _do)
+
+    # ─────────────────────────────────────────────
+    # 실시간 현재가 조회 (독립 버튼 / 자동갱신)
+    # ─────────────────────────────────────────────
+
+    _RT_INTERVAL_MAP = {"15초": 15_000, "30초": 30_000, "1분": 60_000, "5분": 300_000}
+
+    def _fetch_realtime(self):
+        """현재가만 빠르게 조회 (OHLCV 다운로드 없음)"""
+        if self._rt_fetching:
+            return
+        if not self._portfolio:
+            self._rt_status_var.set("종목 없음")
+            return
+        self._rt_fetching = True
+        self._rt_btn.config(state="disabled")
+        self._rt_status_var.set("조회 중…")
+        self._rt_thread = threading.Thread(target=self._realtime_thread, daemon=True)
+        self._rt_thread.start()
+
+    def _realtime_thread(self):
+        try:
+            cache_dir = os.path.join(BASE_DIR, self.settings.data.cache_dir)
+            loader    = DataLoader(cache_dir)
+            symbols   = [t for t, _ in self._portfolio]
+            prices    = loader.get_realtime_prices(symbols)
+            self.frame.after(0, lambda: self._apply_realtime(prices))
+        except Exception as e:
+            logger.error(f"실시간 현재가 조회 오류: {e}")
+            self.frame.after(0, lambda: self._rt_status_var.set(f"오류: {e}"))
+        finally:
+            self._rt_fetching = False
+            self.frame.after(0, lambda: self._rt_btn.config(state="normal"))
+
+    def _apply_realtime(self, prices: dict):
+        """조회 결과를 data_tree 행에 반영, 없는 종목은 신규 삽입"""
+        for ticker, name in self._portfolio:
+            rt = prices.get(ticker)
+            if rt is None:
+                continue
+            cur   = rt.get("currency", "") or ""
+            price = rt.get("price")
+            chg   = rt.get("change", 0) or 0
+            chgp  = rt.get("change_pct", 0) or 0
+            sign  = "+" if chg >= 0 else ""
+
+            if price is None:
+                continue
+
+            price_str = f"{price:,.0f}" if cur in ("KRW", "") else f"{price:,.2f}"
+            chg_str   = (f"{sign}{chg:,.0f}" if cur in ("KRW", "")
+                         else f"{sign}{chg:,.2f}")
+            chgp_str  = f"{sign}{chgp:.2f}%"
+            rt_tag    = "rt_up" if chg > 0 else ("rt_down" if chg < 0 else "ok")
+
+            if self.data_tree.exists(ticker):
+                # 기존 행: 현재가·전일비·등락률만 갱신
+                vals = list(self.data_tree.item(ticker, "values"))
+                vals[5] = price_str   # 현재가
+                vals[6] = chg_str     # 전일비
+                vals[7] = chgp_str    # 등락률
+                self.data_tree.item(ticker, values=vals, tags=(rt_tag,))
+            else:
+                # 다운로드 전에 현재가만 먼저 조회한 경우 → 새 행 삽입
+                info   = get_info(ticker) or {}
+                market = info.get("market", "—")
+                self.data_tree.insert("", "end", iid=ticker, tags=(rt_tag,),
+                    values=(ticker, name, "—", "—", "—",
+                            price_str, chg_str, chgp_str, market, "📡 실시간"))
+
+        ok_cnt = len(prices)
+        total  = len(self._portfolio)
+        now    = datetime.now().strftime("%H:%M:%S")
+        self._rt_status_var.set(f"최종: {now}  ({ok_cnt}/{total})")
+        self._log(f"[현재가 조회] {ok_cnt}/{total}개 성공  ({now})")
+
+        # 자동갱신 재스케줄
+        if self._rt_auto_on.get():
+            self._schedule_rt_next()
+
+    def _toggle_rt_auto(self):
+        if self._rt_auto_on.get():
+            self._fetch_realtime()
+        else:
+            self._cancel_rt_schedule()
+
+    def _schedule_rt_next(self):
+        self._cancel_rt_schedule()
+        ms = self._RT_INTERVAL_MAP.get(self._rt_interval.get(), 30_000)
+        self._rt_after_id = self.frame.after(ms, self._rt_auto_tick)
+
+    def _rt_auto_tick(self):
+        if self._rt_auto_on.get():
+            self._fetch_realtime()
+
+    def _cancel_rt_schedule(self):
+        if self._rt_after_id:
+            self.frame.after_cancel(self._rt_after_id)
+            self._rt_after_id = None

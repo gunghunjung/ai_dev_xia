@@ -1,0 +1,72 @@
+[
+  {
+    "id": "e6031eb2",
+    "title": "백테스트 초기화 미실시",
+    "category": "버그",
+    "status": "TODO",
+    "priority": "HIGH",
+    "created_at": "2026-03-23",
+    "updated_at": "2026-03-23 03:40",
+    "notes": ""
+  },
+  {
+    "id": "de3744dd",
+    "title": "주식영향 대외변수 모두 적용기능",
+    "category": "개선아이디어",
+    "status": "TODO",
+    "priority": "HIGH",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 13:04",
+    "notes": ""
+  },
+  {
+    "id": "bde9be9b",
+    "title": "멀티-호라이즌 예측 정확도 검증",
+    "category": "AI모델",
+    "status": "TODO",
+    "priority": "HIGH",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 11:55",
+    "notes": "1d/3d/5d/20d 각 horizon별 방향 정확도 및 MAE 추적 필요"
+  },
+  {
+    "id": "2d9c0005",
+    "title": "외부 이벤트 → 가격 반응 시차 분석",
+    "category": "AI모델",
+    "status": "TODO",
+    "priority": "HIGH",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 11:55",
+    "notes": "FOMC 발표 후 실제 가격 반응까지 평균 몇 거래일? lag 피처 최적화"
+  },
+  {
+    "id": "d2bbb563",
+    "title": "Champion-Challenger 모델 비교 UI",
+    "category": "UI",
+    "status": "TODO",
+    "priority": "MEDIUM",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 11:55",
+    "notes": "기존 모델 vs 신규 개선 모델 실제 성능 side-by-side 비교 패널"
+  },
+  {
+    "id": "d9984564",
+    "title": "실제 검증 자동화 스케줄러",
+    "category": "데이터",
+    "status": "TODO",
+    "priority": "HIGH",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 11:46",
+    "notes": "예측 후 horizon 경과 시 자동으로 실제값 수집 및 오차 계산"
+  },
+  {
+    "id": "7bc3c3ca",
+    "title": "급락 미감지 패턴 분석",
+    "category": "AI모델",
+    "status": "TODO",
+    "priority": "MEDIUM",
+    "created_at": "2026-03-22",
+    "updated_at": "2026-03-22 11:55",
+    "notes": "실패 분석 탭에서 급락 미감지 케이스만 필터링 및 원인 추적"
+  }
+]

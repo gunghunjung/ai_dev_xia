@@ -4,6 +4,7 @@ import os, sys, threading, tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import logging
 import numpy as np
+import pandas as pd
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
@@ -30,9 +31,10 @@ class TrainingPanel:
     - 모델 저장 / 불러오기 / 삭제
     """
 
-    def __init__(self, parent, settings: AppSettings, on_change):
+    def __init__(self, parent, settings: AppSettings, on_change, on_complete=None):
         self.settings   = settings
         self.on_change  = on_change
+        self._on_complete = on_complete   # 학습 완료 콜백
         self._stop_event = threading.Event()
         self._thread    = None
         self.trainer    = None
@@ -79,7 +81,32 @@ class TrainingPanel:
     # UI 구성
     # ─────────────────────────────────────────────
 
+    def notify_data_updated(self):
+        """데이터 탭에서 새 데이터 다운로드 완료 시 메인 윈도우가 호출"""
+        if hasattr(self, "_data_update_bar"):
+            self._data_update_bar.configure(height=30)
+
+    def dismiss_data_update_notice(self):
+        """탭 방문 or 학습 시작 시 배너 숨김"""
+        if hasattr(self, "_data_update_bar"):
+            self._data_update_bar.configure(height=0)
+
     def _build(self):
+        # 데이터 업데이트 알림 배너 (초기 숨김 — notify_data_updated() 시 표시)
+        self._data_update_bar = tk.Frame(self.frame, bg="#2a2a00", height=0)
+        self._data_update_bar.pack(fill="x")
+        self._data_update_bar.pack_propagate(False)
+        _bar_inner = tk.Frame(self._data_update_bar, bg="#2a2a00")
+        _bar_inner.pack(fill="both", expand=True, padx=10)
+        tk.Label(
+            _bar_inner,
+            text="🔔  새 데이터가 다운로드되었습니다  —  최신 데이터로 모델을 재학습하면 예측 정확도가 향상됩니다",
+            bg="#2a2a00", fg="#f9e2af",
+            font=("맑은 고딕", 9, "bold"), anchor="w",
+        ).pack(side="left", fill="y")
+        ttk.Button(_bar_inner, text="✕ 닫기",
+                   command=self.dismiss_data_update_notice).pack(side="right")
+
         # 안내 배너
         banner = tk.Frame(self.frame, bg="#1a1a2e", pady=7)
         banner.pack(fill="x", padx=6, pady=(6, 2))
@@ -103,8 +130,8 @@ class TrainingPanel:
         # 왼쪽 패널: 스크롤 가능하게 감싸기
         left_outer = ttk.LabelFrame(pane, text="① 학습 설정", padding=4)
         right      = ttk.LabelFrame(pane, text="② 학습 진행 / 결과", padding=8)
-        pane.add(left_outer, minsize=340)
-        pane.add(right,      minsize=700)
+        pane.add(left_outer, minsize=240)
+        pane.add(right,      minsize=500)
 
         # Canvas + Scrollbar 스크롤 프레임
         _left_canvas = tk.Canvas(left_outer, bg="#1e1e2e",
@@ -130,7 +157,7 @@ class TrainingPanel:
         # 마우스 휠 스크롤
         def _on_mousewheel(event):
             _left_canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
-        left.bind_all("<MouseWheel>", _on_mousewheel)
+        _left_canvas.bind("<MouseWheel>", _on_mousewheel)
 
         self._build_left(left)
         self._build_right(right)
@@ -184,7 +211,7 @@ class TrainingPanel:
             bg="#181825", fg="#cdd6f4",
             selectbackground="#89b4fa", selectforeground="#1e1e2e",
             font=("맑은 고딕", 9),
-            relief="flat", height=5,
+            relief="flat", height=10,
             exportselection=False,          # 다른 위젯 클릭 시 선택 유지
         )
         vsb = ttk.Scrollbar(lb_fr, orient="vertical",
@@ -223,6 +250,28 @@ class TrainingPanel:
                    ).pack(side="left", padx=(0, 8))
         ttk.Button(lb_btn, text="↺ 새로고침",
                    command=self.refresh_symbols).pack(side="left")
+
+        # ── 뉴스 AI 상태 배지 ──────────────────────
+        news_status_fr = tk.Frame(parent, bg="#1e1e2e")
+        news_status_fr.pack(fill="x", pady=(0, 4))
+
+        news_enabled = getattr(getattr(self.settings, "news", None),
+                               "use_news_in_model", False)
+        badge_text  = "뉴스 AI 피처: 활성 (40D)" if news_enabled else "뉴스 AI 피처: 비활성"
+        badge_bg    = "#1a3020" if news_enabled else "#2a1a1a"
+        badge_fg    = "#a6e3a1" if news_enabled else "#6c7086"
+        badge_dot   = "●" if news_enabled else "○"
+        self._news_badge = tk.Label(
+            news_status_fr,
+            text=f"  {badge_dot}  {badge_text}  ",
+            bg=badge_bg, fg=badge_fg,
+            font=("맑은 고딕", 8, "bold"),
+            relief="flat", padx=4, pady=2,
+        )
+        self._news_badge.pack(side="left", padx=2)
+        add_tooltip(self._news_badge,
+                    "뉴스 AI 피처가 모델 학습에 포함되는지 표시합니다.\n"
+                    "설정 탭 → 뉴스/외부환경 → '모델에 뉴스 피처 사용' 항목으로 전환하세요.")
 
         # ── ② 저장된 모델 정보 ─────────────────────
         mdl_fr = ttk.LabelFrame(parent, text="저장된 모델", padding=4)
@@ -454,24 +503,37 @@ class TrainingPanel:
         self._refresh_model_info(sym)
 
     def _get_selected_symbol(self) -> str:
-        """현재 선택된 ticker 코드만 반환"""
+        """
+        현재 선택된 ticker 코드만 반환.
+
+        Listbox 텍스트 형식: "📦  005930.KS   삼성전자"
+        가장 안전한 방법은 settings.data.symbols 인덱스로 역참조하는 것.
+        파싱 실패 시 인덱스 기반 fallback.
+        """
         sel = self.sym_listbox.curselection()
         if not sel:
             return ""
-        text = self.sym_listbox.get(sel[0])
-        # 형식: "📦  005930.KS   삼성전자"  or "    005930.KS   삼성전자"
-        parts = text.split()
-        # 첫 토큰이 아이콘이면 두 번째가 ticker, 아니면 첫 번째
-        for part in parts:
-            if "." in part or part.isalpha():  # ticker 형식
-                return part
-            # 숫자 6자리 (KRX)
+        idx  = sel[0]
+        syms = self.settings.data.symbols
+        # ① 인덱스 기반 직접 참조 (가장 안전)
+        if idx < len(syms):
+            return syms[idx]
+        # ② fallback: 텍스트에서 종목코드 토큰 추출
+        text   = self.sym_listbox.get(idx)
+        parts  = text.split()
+        non_emoji = [p for p in parts if p.isprintable() and p not in ("📦", "✗")]
+        for part in non_emoji:
+            # KRX: "005930.KS" 또는 "005930"(6자리 숫자)
             stripped = part.strip()
             if stripped.isdigit() and len(stripped) == 6:
                 return stripped
-        # fallback: 첫 번째 비아이콘 토큰
-        tokens = [p for p in parts if p not in ("📦", "")]
-        return tokens[0] if tokens else ""
+            if "." in part and any(part.upper().endswith(s)
+                                   for s in (".KS", ".KQ", ".KX")):
+                return part
+            # 해외 주식: 알파벳만 2~6자 (AAPL, MSFT 등)
+            if part.isascii() and part.isupper() and 2 <= len(part) <= 6:
+                return part
+        return non_emoji[0] if non_emoji else ""
 
     def _refresh_model_info(self, sym: str):
         """선택 종목의 저장된 모델 정보 표시"""
@@ -482,28 +544,27 @@ class TrainingPanel:
             self.del_btn.config(state="disabled")
             return
 
-        meta = self._store.get_meta(sym)
-        hist = meta.get("history", [])
-        if not hist:
+        meta    = self._store.get_meta(sym)
+        ts      = meta.get("timestamp", "")
+        metrics = meta.get("metrics", {})
+
+        if not ts and not metrics:
             self.model_info_var.set(f"[{sym}]\n메타 정보 없음 (모델 파일은 존재)")
             self.load_btn.config(state="normal")
             self.del_btn.config(state="normal")
             return
 
-        latest  = hist[-1]
-        ts      = latest.get("timestamp", "—")
-        ts      = f"{ts[:4]}-{ts[4:6]}-{ts[6:8]} {ts[9:11]}:{ts[11:13]}" if len(ts) >= 13 else ts
-        metrics = latest.get("metrics", {})
+        ts_fmt  = (f"{ts[:4]}-{ts[4:6]}-{ts[6:8]} {ts[9:11]}:{ts[11:13]}"
+                   if len(ts) >= 13 else ts or "—")
         ep      = metrics.get("best_epoch", "—")
         vl      = metrics.get("best_val_loss", metrics.get("val_loss", 0))
         np_     = metrics.get("n_params", "—")
-
         vl_str  = f"{vl:.6f}" if isinstance(vl, float) else str(vl)
         np_str  = f"{np_:,}" if isinstance(np_, int) else str(np_)
 
         info = (
-            f"[{sym}]  저장 버전: {len(hist)}개\n"
-            f"최근 학습: {ts}\n"
+            f"[{sym}]  latest.pt\n"
+            f"최근 학습: {ts_fmt}\n"
             f"최적 Epoch: {ep}  |  Val Loss: {vl_str}\n"
             f"파라미터: {np_str}"
         )
@@ -581,23 +642,42 @@ class TrainingPanel:
                     except Exception:
                         pass
 
+                _ts_mode    = saved_cfg.get("ts_mode", "scalar")
+                _seg_len    = int(segs.shape[1])
+                _ts_indim   = (int(segs.shape[2])          # 5 (OHLCV) for segment mode
+                               if _ts_mode == "segment"
+                               else int(ts_feats.shape[1]))  # 32 for scalar mode
+
                 arch_config = {
                     "img_in_channels":    saved_cfg.get("img_in_channels",    int(images.shape[1])),
                     "cnn_channels":       saved_cfg.get("cnn_channels",       self.settings.model.cnn_channels),
                     "cnn_out_dim":        saved_cfg.get("cnn_out_dim",        self.settings.model.cnn_out_dim),
-                    "ts_input_dim":       saved_cfg.get("ts_input_dim",       int(ts_feats.shape[1])),
+                    "ts_input_dim":       saved_cfg.get("ts_input_dim",       _ts_indim),
                     "d_model":            saved_cfg.get("d_model",            params["d_model"]),
                     "nhead":              saved_cfg.get("nhead",              params["nhead"]),
                     "num_encoder_layers": saved_cfg.get("num_encoder_layers", params["num_layers"]),
                     "dim_feedforward":    saved_cfg.get("dim_feedforward",    params["d_model"] * 2),
                     "dropout":            saved_cfg.get("dropout",            params["dropout"]),
+                    "ts_mode":            _ts_mode,
+                    "segment_length":     saved_cfg.get("segment_length", _seg_len),
                 }
                 if saved_cfg:
-                    self._log(f"[{sym}] 저장된 아키텍처 config 사용 (d_model={arch_config['d_model']})")
+                    self._log(f"[{sym}] 저장된 아키텍처 config 사용 (d_model={arch_config['d_model']}, ts_mode={_ts_mode})")
                 else:
-                    self._log(f"[{sym}] ⚠️ 저장된 config 없음 → UI 파라미터로 로드 시도")
+                    self._log(f"[{sym}] ⚠️ 저장된 config 없음 → UI 파라미터로 로드 시도 (ts_mode=scalar)")
 
-                model = HybridModel(**arch_config)
+                model = HybridModel(
+                    img_in_channels    = arch_config["img_in_channels"],
+                    cnn_channels       = arch_config["cnn_channels"],
+                    cnn_out_dim        = arch_config["cnn_out_dim"],
+                    ts_input_dim       = arch_config["ts_input_dim"],
+                    d_model            = arch_config["d_model"],
+                    nhead              = arch_config["nhead"],
+                    num_encoder_layers = arch_config["num_encoder_layers"],
+                    dim_feedforward    = arch_config["dim_feedforward"],
+                    dropout            = arch_config["dropout"],
+                    max_seq_len        = arch_config["segment_length"] + 10,
+                )
 
                 ok = self._store.load(model, sym, device=device)
                 if not ok:
@@ -605,11 +685,16 @@ class TrainingPanel:
                     self._set_status("모델 로드 실패")
                     return
 
-                # 추론
+                # 추론 (ts_mode에 따라 입력 결정)
                 self.trainer = ModelTrainer(model, device=device,
                                             store=self._store, log_cb=self._log)
-                mu_arr, sigma_arr = self.trainer.predict(images[-20:],
-                                                         ts_feats[-20:])
+                n_test = min(20, len(segs))
+                if _ts_mode == "segment":
+                    mu_arr, sigma_arr = self.trainer.predict(
+                        images[-n_test:], segs[-n_test:].astype(np.float32))
+                else:
+                    mu_arr, sigma_arr = self.trainer.predict(
+                        images[-n_test:], ts_feats[-n_test:])
 
                 mu_mean    = float(mu_arr.mean())
                 sigma_mean = float(sigma_arr.mean())
@@ -800,25 +885,101 @@ class TrainingPanel:
                 ts_feats = ts_ext.transform(segs)
                 self._log(f"  이미지: {images.shape}  TS: {ts_feats.shape}")
 
+                # ── 뉴스 AI 피처 생성 (설정에서 활성화 시) ─────────────────────
+                # settings.news.use_news_in_model = True 이면 각 ROI 날짜에
+                # 대응하는 40D 뉴스 특징 벡터를 생성하여 모델에 주입한다.
+                # DB가 없거나 뉴스가 부족하면 None (모델은 자동으로 fallback).
+                news_feats_arr = None
+                _use_news = getattr(
+                    getattr(self.settings, "news", None),
+                    "use_news_in_model", False)
+                if _use_news:
+                    try:
+                        from features.news_features import NewsFeatureGenerator
+                        from data.news_db import NewsDB
+                        db_path = os.path.join(
+                            BASE_DIR, self.settings.news.db_path)
+                        news_db = NewsDB(db_path)
+                        nfg     = NewsFeatureGenerator(
+                            decay_lambda=self.settings.news.decay_lambda)
+                        # ROI 날짜 목록으로 각 시점의 뉴스 벡터 생성
+                        news_list = []
+                        for roi_date in dates:
+                            ref = pd.Timestamp(roi_date) if not isinstance(
+                                roi_date, pd.Timestamp) else roi_date
+                            events = news_db.query_events_before(
+                                symbol=sym,
+                                before_dt=ref.to_pydatetime(),
+                                max_hours=24 * 20,   # 최근 20일치 이벤트
+                            )
+                            vec = nfg.generate(
+                                events=events,
+                                reference_time=ref.to_pydatetime(),
+                                symbol=sym,
+                            )
+                            news_list.append(vec)
+                        if news_list:
+                            news_feats_arr = np.stack(news_list).astype(np.float32)
+                            self._log(
+                                f"  뉴스 AI 피처: {news_feats_arr.shape}  "
+                                f"(비영 비율: "
+                                f"{(news_feats_arr != 0).any(axis=1).mean():.0%})"
+                            )
+                        else:
+                            self._log("  뉴스 AI 피처: DB에 이벤트 없음 — 미주입")
+                    except Exception as _ne:
+                        self._log(f"  뉴스 AI 피처 생성 실패 (무시됨): {_ne}")
+                        news_feats_arr = None
+                else:
+                    self._log("  뉴스 AI 피처: 비활성 (설정 탭에서 활성화 가능)")
+
                 if self._stop_event.is_set():
                     self._log("⏹ 학습 중단됨")
                     break
 
                 # ── 모델 ────────────────────────────
+                # ts_input_dim = 5 (OHLCV 채널) — 세그먼트를 Transformer에 직접 전달
+                # 이전 방식(ts_feats 스칼라, T=1)보다 자기-어텐션이 실제 의미 있게 동작
+                _ts_input_dim  = int(segs.shape[2])   # 5 (OHLCV)
+                _seg_len       = int(segs.shape[1])   # segment_length
+                _news_feat_dim = (int(news_feats_arr.shape[1])
+                                  if news_feats_arr is not None else 0)
+
                 arch_config = {
                     "img_in_channels":    int(images.shape[1]),
                     "cnn_channels":       self.settings.model.cnn_channels,
                     "cnn_out_dim":        self.settings.model.cnn_out_dim,
-                    "ts_input_dim":       int(ts_feats.shape[1]),
+                    "ts_input_dim":       _ts_input_dim,
                     "d_model":            params["d_model"],
                     "nhead":              params["nhead"],
                     "num_encoder_layers": params["num_layers"],
                     "dim_feedforward":    params["d_model"] * 2,
                     "dropout":            params["dropout"],
+                    # ── 피처 메타 (추론 파이프라인 복원용) ──
+                    "segment_length":     _seg_len,
+                    "lookahead":          params["lookahead"],
+                    "image_size":         self.settings.model.image_size,
+                    "ts_mode":            "segment",  # "segment" | "scalar"
+                    "news_feat_dim":      _news_feat_dim,
+                    "use_news":           news_feats_arr is not None,
                 }
-                model    = HybridModel(**arch_config)
+                model    = HybridModel(
+                    img_in_channels    = arch_config["img_in_channels"],
+                    cnn_channels       = arch_config["cnn_channels"],
+                    cnn_out_dim        = arch_config["cnn_out_dim"],
+                    ts_input_dim       = arch_config["ts_input_dim"],
+                    d_model            = arch_config["d_model"],
+                    nhead              = arch_config["nhead"],
+                    num_encoder_layers = arch_config["num_encoder_layers"],
+                    dim_feedforward    = arch_config["dim_feedforward"],
+                    dropout            = arch_config["dropout"],
+                    max_seq_len        = _seg_len + 10,  # 여유 길이
+                )
                 n_params = model.count_parameters()
                 self._log(f"  파라미터: {n_params:,}개  |  디바이스: {device}")
+                self._log(f"  TS모드: segment ({_seg_len}T × {_ts_input_dim}F)"
+                          + (f"  | 뉴스: {_news_feat_dim}D"
+                             if news_feats_arr is not None else ""))
 
                 # ── 학습 ────────────────────────────
                 self.trainer = ModelTrainer(
@@ -833,6 +994,8 @@ class TrainingPanel:
 
                 metrics = self.trainer.train(
                     images=images, ts_feats=ts_feats, labels=labels,
+                    segments=segs,               # ← 전체 OHLCV 세그먼트 (Transformer용)
+                    news_feats=news_feats_arr,   # ← 뉴스 AI 피처 (None이면 미주입)
                     symbol=sym, model_config=arch_config,
                     lr=params["lr"], batch_size=params["batch_size"],
                     epochs=params["epochs"], patience=params["patience"],
@@ -890,6 +1053,8 @@ class TrainingPanel:
         self.progress["value"] = 100
         self.pct_var.set("100%")
         self._set_status("완료")
+        if self._on_complete:
+            self._on_complete()
 
     def _update_progress(self, pct: float, msg: str):
         self.progress["value"] = min(pct, 100)
@@ -1064,15 +1229,15 @@ class TrainingPanel:
                             values=(name, code, "✗ 미학습", "—", "—", "—", "—", "0"))
                 continue
 
-            meta = self._store.get_meta(sym)
-            hist = meta.get("history", [])
-            if not hist:
+            meta   = self._store.get_meta(sym)
+            ts_raw = meta.get("timestamp", "")
+            m      = meta.get("metrics", {})
+
+            if not ts_raw and not m:
                 tree.insert("", "end", tags=("has_model",),
-                            values=(name, code, "📦 있음", "메타 없음", "—", "—", "—", "0"))
+                            values=(name, code, "📦 있음", "메타 없음", "—", "—", "—", "—"))
                 continue
 
-            latest  = hist[-1]
-            ts_raw  = latest.get("timestamp", "")
             if len(ts_raw) >= 13:
                 ts_fmt = (f"{ts_raw[:4]}-{ts_raw[4:6]}-{ts_raw[6:8]} "
                           f"{ts_raw[9:11]}:{ts_raw[11:13]}")
@@ -1085,7 +1250,6 @@ class TrainingPanel:
                 ts_fmt = ts_raw or "—"
                 stale  = False
 
-            m   = latest.get("metrics", {})
             ep  = m.get("best_epoch", "—")
             vl  = m.get("best_val_loss", m.get("val_loss", None))
             np_ = m.get("n_params", "—")
@@ -1096,7 +1260,7 @@ class TrainingPanel:
             status = "⚠️ 오래됨" if stale else "📦 학습됨"
             tree.insert("", "end", tags=(tag,),
                         values=(name, code, status, ts_fmt,
-                                ep, vl_str, np_str, len(hist)))
+                                ep, vl_str, np_str, "1"))
 
     def _set_status(self, msg: str):
         self.frame.after(0, lambda: self.status_var.set(msg))

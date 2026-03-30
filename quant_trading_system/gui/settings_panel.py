@@ -113,8 +113,8 @@ class SettingsPanel:
         canvas.pack(side="left",  fill="both", expand=True)
         vsb.pack(side="right", fill="y")
 
-        canvas.bind_all("<MouseWheel>",
-                        lambda e: canvas.yview_scroll(-1 * (e.delta // 120), "units"))
+        canvas.bind("<MouseWheel>",
+                    lambda e: canvas.yview_scroll(-1 * (e.delta // 120), "units"))
 
         return {"outer": outer, "inner": inner}
 

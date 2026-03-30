@@ -29,19 +29,11 @@ from config import AppSettings
 from data import DataLoader
 from data.korean_stocks import get_name
 from gui.tooltip import add_tooltip
+from gui.theme import BG as _BG, PANEL_BG as _PANEL_BG, FG as _FG, DIM as _DIM
+from gui.theme import ACCENT as _ACCENT, GREEN as _GREEN, RED as _RED
+from gui.theme import YELLOW as _YELLOW, PURPLE as _PURPLE
 
 logger = logging.getLogger("quant.gui.predict")
-
-# ─── 색상 상수 ──────────────────────────────────────────────────────────────
-_BG       = "#1e1e2e"
-_PANEL_BG = "#181825"
-_FG       = "#cdd6f4"
-_DIM      = "#9399b2"
-_ACCENT   = "#89b4fa"
-_GREEN    = "#a6e3a1"
-_RED      = "#f38ba8"
-_YELLOW   = "#f9e2af"
-_PURPLE   = "#cba6f7"
 
 
 class PredictionPanel:
@@ -55,16 +47,13 @@ class PredictionPanel:
       4. 포트폴리오 제안 확인 → 투자 판단 참고
     """
 
-    # 예측 기간 선택지
-    _HORIZONS = [
-        ("1거래일 (1일 후)",   1),
-        ("5거래일 (1주 후)",   5),
-        ("10거래일 (2주 후)", 10),
-        ("20거래일 (1달 후)", 20),
-    ]
+    # 통합 예측 horizon 목록 (고정)
+    _MULTI_HORIZONS = [1, 3, 5, 20]
+    _HORIZON_LABELS = ["1일", "3일", "5일", "20일"]
 
-    def __init__(self, parent: ttk.Notebook, settings: AppSettings):
+    def __init__(self, parent: ttk.Notebook, settings: AppSettings, on_complete=None):
         self.settings     = settings
+        self._on_complete = on_complete   # 예측 완료 콜백
         self._stop_event  = threading.Event()
         self._thread: threading.Thread | None = None
         self._predictions = []      # 최신 예측 결과 목록
@@ -78,7 +67,31 @@ class PredictionPanel:
     # UI 구성
     # ══════════════════════════════════════════════════════════════════════════
 
+    def notify_data_updated(self):
+        """데이터 탭에서 새 데이터 다운로드 완료 시 메인 윈도우가 호출"""
+        if hasattr(self, "_data_update_bar"):
+            self._data_update_bar.configure(height=30)
+
+    def dismiss_data_update_notice(self):
+        if hasattr(self, "_data_update_bar"):
+            self._data_update_bar.configure(height=0)
+
     def _build(self):
+        # 데이터 업데이트 알림 배너 (초기 숨김)
+        self._data_update_bar = tk.Frame(self.frame, bg="#2a2a00", height=0)
+        self._data_update_bar.pack(fill="x")
+        self._data_update_bar.pack_propagate(False)
+        _bar_inner = tk.Frame(self._data_update_bar, bg="#2a2a00")
+        _bar_inner.pack(fill="both", expand=True, padx=10)
+        tk.Label(
+            _bar_inner,
+            text="🔔  데이터가 업데이트되었습니다  —  새 데이터 반영을 위해 모델 재학습 후 예측을 다시 실행하세요",
+            bg="#2a2a00", fg="#f9e2af",
+            font=("맑은 고딕", 9, "bold"), anchor="w",
+        ).pack(side="left", fill="y")
+        ttk.Button(_bar_inner, text="✕ 닫기",
+                   command=self.dismiss_data_update_notice).pack(side="right")
+
         # 안내 배너
         banner = tk.Frame(self.frame, bg="#1a1a2e", pady=7)
         banner.pack(fill="x", padx=6, pady=(6, 2))
@@ -96,15 +109,15 @@ class PredictionPanel:
         ).pack(side="left")
 
         # 대상 종목 표시 띠
-        sym_bar = tk.Frame(self.frame, bg="#12122a", pady=4)
+        sym_bar = tk.Frame(self.frame, bg="#12122a", height=26)
         sym_bar.pack(fill="x", padx=6, pady=(0, 2))
+        sym_bar.pack_propagate(False)
         tk.Label(sym_bar, text="🎯", bg="#12122a", fg=_ACCENT,
                  font=("맑은 고딕", 9)).pack(side="left", padx=(10, 4))
         self._target_var = tk.StringVar(value="")
         tk.Label(sym_bar, textvariable=self._target_var,
                  bg="#12122a", fg="#cba6f7",
-                 font=("맑은 고딕", 9, "bold"),
-                 wraplength=1200, justify="left").pack(side="left")
+                 font=("맑은 고딕", 9, "bold"), anchor="w").pack(side="left", fill="x", expand=True)
         self._update_target_symbols_label()
 
         # 제어 바
@@ -127,21 +140,30 @@ class PredictionPanel:
         ctrl = tk.Frame(self.frame, bg=_PANEL_BG, pady=6)
         ctrl.pack(fill="x", padx=6, pady=(0, 2))
 
-        # ── 예측 기간 ──────────────────────────────────────────────────
-        tk.Label(ctrl, text="예측 기간:", bg=_PANEL_BG, fg=_FG,
-                 font=("맑은 고딕", 9)).pack(side="left", padx=(12, 4))
-
-        self._horizon_var = tk.StringVar(value=self._HORIZONS[1][0])
-        horizon_combo = ttk.Combobox(
-            ctrl, textvariable=self._horizon_var,
-            values=[h[0] for h in self._HORIZONS],
-            state="readonly", width=20,
+        # ── 통합 예측 모드 표시 배지 ───────────────────────────────────
+        mode_lbl = tk.Label(
+            ctrl,
+            text="  🔮 통합 예측  1일 · 3일 · 5일 · 20일 동시 출력  ",
+            bg="#1a1a40", fg="#cba6f7",
+            font=("맑은 고딕", 9, "bold"),
+            relief="flat", padx=8, pady=2,
         )
-        horizon_combo.pack(side="left", padx=(0, 12))
-        add_tooltip(horizon_combo,
-                    "AI가 몇 거래일 뒤의 주가 방향을 예측할지 선택합니다.\n\n"
-                    "5거래일 = 약 1주일 뒤 (초보자 추천)\n"
-                    "20거래일 = 약 1달 뒤 (더 어려운 예측)")
+        mode_lbl.pack(side="left", padx=(12, 8))
+
+        # ── 뉴스 AI 피처 상태 배지 ─────────────────────────────────────
+        news_enabled = getattr(getattr(self.settings, "news", None),
+                               "use_news_in_model", False)
+        badge_text = "뉴스 AI: ON" if news_enabled else "뉴스 AI: OFF"
+        badge_bg   = "#1a3020" if news_enabled else "#2a1a1a"
+        badge_fg   = "#a6e3a1" if news_enabled else "#6c7086"
+        self._news_badge = tk.Label(
+            ctrl,
+            text=f"  {'●' if news_enabled else '○'}  {badge_text}  ",
+            bg=badge_bg, fg=badge_fg,
+            font=("맑은 고딕", 8, "bold"),
+            relief="flat", padx=6, pady=2,
+        )
+        self._news_badge.pack(side="left", padx=(0, 12))
 
         # ── 가중 방법 ──────────────────────────────────────────────────
         tk.Label(ctrl, text="포트폴리오 비중:", bg=_PANEL_BG, fg=_FG,
@@ -235,12 +257,14 @@ class PredictionPanel:
                  bg=_BG, fg=_DIM,
                  font=("맑은 고딕", 9)).pack(side="left")
 
-        cols = ("종목", "현재가", "방향", "상승확률", "예상수익률", "신뢰도", "추천행동")
+        # 멀티-호라이즌 통합 리포트 컬럼
+        cols = ("종목", "현재가", "1일후", "3일후", "5일후", "20일후", "신뢰도(5d)", "추천(5d)")
         self._tree = ttk.Treeview(parent, columns=cols, show="headings", height=9)
 
         col_w = {
-            "종목":    175, "현재가": 110, "방향":     90,
-            "상승확률": 85, "예상수익률": 90, "신뢰도": 80, "추천행동": 90,
+            "종목":    140, "현재가": 80,
+            "1일후": 90, "3일후": 90, "5일후": 90, "20일후": 90,
+            "신뢰도(5d)": 80, "추천(5d)": 80,
         }
         for c in cols:
             self._tree.heading(c, text=c, command=lambda col=c: self._sort_by(col))
@@ -351,13 +375,6 @@ class PredictionPanel:
             # ── InferencePredictor 초기화 ──────────────────────────────
             predictor = InferencePredictor(self.settings, model_dir, cache_dir)
 
-            # ── 예측 기간 파싱 ─────────────────────────────────────────
-            horizon_str = self._horizon_var.get()
-            horizon_days = next(
-                (d for name, d in self._HORIZONS if name == horizon_str),
-                5
-            )
-
             # ── CUDA 감지 ──────────────────────────────────────────────
             device = "cpu"
             try:
@@ -382,7 +399,19 @@ class PredictionPanel:
                 self._set_status("❌ 로드 가능한 데이터가 없습니다. 데이터 탭에서 다운로드하세요.")
                 return
 
-            # ── 예측 실행 ──────────────────────────────────────────────
+            # ── 외부환경 벡터 시도 로드 ───────────────────────────────
+            macro_vec = None
+            try:
+                from features.macro_features import MacroFeatureBuilder
+                from data.news_fetcher import NewsFetcher
+                fetcher = NewsFetcher(cache_dir=cache_dir)
+                events  = fetcher.fetch(max_items=60)
+                builder = MacroFeatureBuilder()
+                macro_vec = builder.build(events)
+            except Exception:
+                pass
+
+            # ── 통합 멀티-호라이즌 예측 실행 ──────────────────────────
             high_conf = self._high_conf_var.get()
 
             def _prog(pct, msg):
@@ -390,24 +419,43 @@ class PredictionPanel:
                     self.frame.after(0, lambda p=pct, m=msg:
                                      self._update_progress(p, m))
 
-            results = predictor.predict_all(
-                symbols      = symbols,
-                data_dict    = data_dict,
-                device       = device,
-                horizon_days = horizon_days,
+            results = predictor.predict_all_multi_horizon(
+                symbols        = symbols,
+                data_dict      = data_dict,
+                device         = device,
+                macro_vec      = macro_vec,
                 high_conf_only = high_conf,
-                progress_cb  = _prog,
+                progress_cb    = _prog,
             )
 
             if self._stop_event.is_set():
                 self._set_status("중단됨")
                 return
 
-            # ── 포트폴리오 구성 ────────────────────────────────────────
+            # ── 포트폴리오 구성 (5d primary 기준) ─────────────────────
             top_n  = int(self._topn_var.get())
             method = self._method_var.get()
+            # predict_all_multi_horizon → primary dict 리스트로 변환
+            compat_results = []
+            for r in results:
+                if r.get("error") is None:
+                    h5 = r.get("horizons", {}).get("5", {})
+                    compat_results.append({
+                        "symbol":           r["symbol"],
+                        "current_price":    r["current_price"],
+                        "predicted_return": h5.get("return_pct", 0.0) / 100.0,
+                        "prob_up":          h5.get("prob_up", 0.5),
+                        "direction":        h5.get("direction", "NEUTRAL"),
+                        "confidence":       h5.get("confidence", "LOW"),
+                        "action":           h5.get("action", "HOLD"),
+                        "error":            None,
+                    })
+                else:
+                    compat_results.append({"symbol": r["symbol"],
+                                           "error": r["error"]})
+
             portfolio = predictor.build_portfolio_from_predictions(
-                results,
+                compat_results,
                 method         = method,
                 top_n          = top_n,
                 min_confidence = "MEDIUM" if high_conf else "LOW",
@@ -450,15 +498,24 @@ class PredictionPanel:
         self._predictions = results
         self._tree.delete(*self._tree.get_children())
 
-        valid_cnt = sum(1 for r in results if r["error"] is None)
+        valid_cnt = sum(1 for r in results if r.get("error") is None)
         model_cnt = sum(1 for r in results
-                        if r["error"] is None and r["action"] != "HOLD")
+                        if r.get("error") is None
+                        and r.get("horizons", {}).get("5", {}).get("action") != "HOLD")
         self._count_var.set(
-            f"  총 {len(results)}개 종목  |  유효 예측 {valid_cnt}개  |  매매 신호 {model_cnt}개"
+            f"  총 {len(results)}개 종목  |  유효 예측 {valid_cnt}개  |  "
+            f"매매신호(5d기준) {model_cnt}개"
         )
 
         for pred in results:
             self._insert_row(pred)
+
+        # 예측 이력 자동 저장 (백그라운드)
+        threading.Thread(
+            target=self._log_predictions_to_history,
+            args=(results,),
+            daemon=True,
+        ).start()
 
         # 포트폴리오 표시
         self._update_text_widget(self._port_text, portfolio.get("summary", ""))
@@ -466,55 +523,60 @@ class PredictionPanel:
         # 확률 차트 그리기
         self.frame.after(100, lambda: self._draw_prob_chart(results))
 
+        # 5d primary 기준 집계
+        def _action5(r):
+            return r.get("horizons", {}).get("5", {}).get("action", "HOLD")
+        n_buy  = sum(1 for r in results if _action5(r) == "BUY")
+        n_sell = sum(1 for r in results if _action5(r) == "SELL")
+        n_hold = sum(1 for r in results if _action5(r) == "HOLD")
         self._set_status(
-            f"✅ 예측 완료  |  "
-            f"BUY {sum(1 for r in results if r.get('action')=='BUY')}  |  "
-            f"SELL {sum(1 for r in results if r.get('action')=='SELL')}  |  "
-            f"HOLD {sum(1 for r in results if r.get('action')=='HOLD')}"
+            f"✅ 통합 예측 완료 (1d·3d·5d·20d)  |  "
+            f"BUY {n_buy}  |  SELL {n_sell}  |  HOLD {n_hold}"
         )
+        if self._on_complete:
+            self.frame.after(0, self._on_complete)
 
     def _insert_row(self, pred: dict):
-        """Treeview에 예측 결과 행 삽입."""
+        """Treeview에 멀티-호라이즌 통합 예측 결과 행 삽입."""
         sym      = pred["symbol"]
-        sym_disp = self._sym_label(sym)   # "삼성전자 (005930)"
+        sym_disp = self._sym_label(sym)
         error    = pred.get("error")
 
         if error:
             self._tree.insert("", "end", iid=sym, tags=("ERROR",),
-                              values=(sym_disp, "—", "오류", "—", "—", "—", "—"))
+                              values=(sym_disp, "—", "오류", "—", "—", "—", "—", "—"))
             return
 
-        # 현재가 포맷
-        price = pred["current_price"]
-        price_str = (f"{price:,.0f}원" if price >= 1000 else f"{price:.2f}")
+        price = pred.get("current_price", 0.0)
+        price_str = f"{price:,.0f}원" if price >= 1000 else f"{price:.2f}"
 
-        # 방향 아이콘
-        dir_map = {"UP": "📈 상승", "DOWN": "📉 하락", "NEUTRAL": "↔️ 중립"}
-        dir_str = dir_map.get(pred["direction"], pred["direction"])
+        horizons = pred.get("horizons", {})
 
-        # 확률
-        prob_str = f"{pred['prob_up']:.0%}"
+        def _h_cell(h_key: str) -> str:
+            """horizon 셀 문자열: '📈 +2.31%' 형식."""
+            h = horizons.get(h_key, {})
+            d = h.get("direction", "NEUTRAL")
+            r = h.get("return_pct", 0.0)
+            icon = {"UP": "📈", "DOWN": "📉", "NEUTRAL": "↔"}.get(d, "↔")
+            return f"{icon} {r:+.1f}%"
 
-        # 예상 수익률
-        ret = pred["predicted_return"]
-        ret_str = f"{ret*100:+.2f}%"
+        h1  = _h_cell("1")
+        h3  = _h_cell("3")
+        h5  = _h_cell("5")
+        h20 = _h_cell("20")
 
-        # 신뢰도
-        conf_map = {"HIGH": "HIGH ✅", "MEDIUM": "MEDIUM ⚡", "LOW": "LOW ⚠️"}
-        conf_str = conf_map.get(pred["confidence"], pred["confidence"])
+        # 5d 대표값 기준 신뢰도·추천
+        h5_data = horizons.get("5", {})
+        conf    = h5_data.get("confidence", "LOW")
+        action  = h5_data.get("action",     "HOLD")
 
-        # 추천 아이콘
-        action_map = {
-            "BUY":   "🟢 BUY",
-            "SELL":  "🔴 SELL",
-            "WATCH": "🟡 WATCH",
-            "HOLD":  "⚪ HOLD",
-        }
-        action_str = action_map.get(pred["action"], pred["action"])
+        conf_map   = {"HIGH": "HIGH ✅", "MEDIUM": "MED ⚡", "LOW": "LOW ⚠️"}
+        action_map = {"BUY": "🟢 BUY", "SELL": "🔴 SELL",
+                      "WATCH": "🟡 WATCH", "HOLD": "⚪ HOLD"}
+        conf_str   = conf_map.get(conf, conf)
+        action_str = action_map.get(action, action)
 
-        # 행 색상 태그
-        action = pred["action"]
-        conf   = pred["confidence"]
+        # 행 색상
         if action == "BUY" and conf == "HIGH":
             tag = "UP_HIGH"
         elif action == "BUY":
@@ -529,8 +591,8 @@ class PredictionPanel:
             tag = "NEUTRAL"
 
         self._tree.insert("", "end", iid=sym, tags=(tag,),
-                          values=(sym_disp, price_str, dir_str, prob_str,
-                                  ret_str, conf_str, action_str))
+                          values=(sym_disp, price_str, h1, h3, h5, h20,
+                                  conf_str, action_str))
 
     def _on_row_select(self, event):
         """행 선택 → 상세 설명 표시."""
@@ -542,33 +604,59 @@ class PredictionPanel:
         if not pred:
             return
 
-        # 상세 텍스트
+        # 상세 텍스트 — 멀티-호라이즌 통합 리포트
         lines = []
         name = self._get_name(sym)
         if pred.get("error"):
             lines.append(f"❌ {name} ({sym})")
             lines.append(f"오류: {pred['error']}")
         else:
-            lines.append(f"═══ {name} ({sym}) ═══")
-            lines.append(f"현재가:       {pred['current_price']:,.0f}원")
-            lines.append(f"예측 방향:    {pred['direction']}")
-            lines.append(f"상승 확률:    {pred['prob_up']:.1%}")
-            lines.append(f"하락 확률:    {pred['prob_down']:.1%}")
-            lines.append(f"예상 수익률:  {pred['predicted_return']*100:+.2f}%")
-            lines.append(f"불확실성(σ): {pred['uncertainty']:.5f}")
-            lines.append(f"신호 강도:    {pred['snr']:.3f}")
-            lines.append(f"신뢰도:       {pred['confidence']}")
-            lines.append(f"추천 행동:    {pred['action']}")
-            lines.append(f"예측 기간:    {pred['horizon_days']}거래일")
+            price = pred.get("current_price", 0.0)
+            lines.append(f"══════ {name} ({sym}) 통합 예측 리포트 ══════")
+            lines.append(f"현재가: {price:,.0f}원")
             as_of = pred.get("as_of_date")
             if as_of is not None:
                 try:
-                    lines.append(f"예측 기준일:  {as_of.date()}")
+                    lines.append(f"예측 기준일: {as_of.date()}")
                 except Exception:
                     pass
             lines.append("")
-            lines.append("── AI 설명 ──")
-            lines.append(pred.get("explanation", ""))
+
+            # 호라이즌별 상세
+            lines.append("─── Multi-Horizon 예측 ───")
+            lines.append(f"{'기간':<8} {'방향':<8} {'P(↑)':<8} {'수익률':<10} {'신뢰도':<8} {'추천'}")
+            lines.append("─" * 58)
+            horizons = pred.get("horizons", {})
+            h_labels = {"1": "1거래일", "3": "3거래일", "5": "5거래일", "20": "20거래일"}
+            for hk in ["1", "3", "5", "20"]:
+                h = horizons.get(hk, {})
+                d    = h.get("direction", "NEUTRAL")
+                pu   = h.get("prob_up", 0.5)
+                ret  = h.get("return_pct", 0.0)
+                conf = h.get("confidence", "LOW")
+                act  = h.get("action", "HOLD")
+                icon = {"UP": "📈", "DOWN": "📉", "NEUTRAL": "↔"}.get(d, "↔")
+                lbl  = h_labels.get(hk, hk)
+                lines.append(
+                    f"{lbl:<8} {icon+d:<8} {pu:.0%}    {ret:+.2f}%      "
+                    f"{conf:<8} {act}"
+                )
+
+            lines.append("")
+            # 외부환경 반영
+            ms = pred.get("macro_sentiment", 0.0)
+            mt = pred.get("macro_event_tags", "")
+            if ms != 0.0 or mt:
+                lines.append("─── 외부환경 반영 ───")
+                mood = "🔵 호재" if ms > 0.1 else ("🔴 악재" if ms < -0.1 else "⚪ 중립")
+                lines.append(f"시장 분위기: {mood}  (감성 점수: {ms:+.2f})")
+                if mt:
+                    lines.append(f"감지된 이벤트: {mt}")
+                lines.append("")
+
+            # 기준 정보
+            bl = pred.get("baseline_lookahead", "?")
+            lines.append(f"모델 기준 lookahead: {bl}일 → GBM 스케일링 적용")
 
         self._update_text_widget(self._detail_text, "\n".join(lines))
 
@@ -614,8 +702,9 @@ class PredictionPanel:
             y_top = pad_t + i * (bar_h + 4)
             y_bot = y_top + bar_h
 
-            prob   = pred["prob_up"]
-            action = pred["action"]
+            h5     = pred.get("horizons", {}).get("5", {})
+            prob   = h5.get("prob_up", pred.get("prob_up", 0.5))
+            action = h5.get("action", pred.get("action", "HOLD"))
 
             # 막대 색상
             color_map = {
@@ -669,19 +758,25 @@ class PredictionPanel:
             self._sort_col = col
             self._sort_rev = True
 
-        col_key_map = {
-            "예상수익률": "predicted_return",
-            "상승확률":   "prob_up",
-            "신뢰도":     "snr",
-            "종목":       "symbol",
+        def _h_ret(r, hk):
+            return r.get("horizons", {}).get(hk, {}).get("return_pct", 0.0)
+
+        col_key_fn = {
+            "1일후":     lambda r: _h_ret(r, "1"),
+            "3일후":     lambda r: _h_ret(r, "3"),
+            "5일후":     lambda r: _h_ret(r, "5"),
+            "20일후":    lambda r: _h_ret(r, "20"),
+            "신뢰도(5d)": lambda r: {"HIGH": 3, "MEDIUM": 2, "LOW": 1}.get(
+                r.get("horizons", {}).get("5", {}).get("confidence", "LOW"), 0),
+            "종목":      lambda r: r.get("symbol", ""),
         }
-        key = col_key_map.get(col)
-        if not key or not self._predictions:
+        fn = col_key_fn.get(col)
+        if not fn or not self._predictions:
             return
 
         valid   = [p for p in self._predictions if p.get("error") is None]
         invalid = [p for p in self._predictions if p.get("error") is not None]
-        valid.sort(key=lambda x: x.get(key, 0), reverse=self._sort_rev)
+        valid.sort(key=fn, reverse=self._sort_rev)
 
         self._tree.delete(*self._tree.get_children())
         for pred in valid + invalid:
@@ -715,6 +810,68 @@ class PredictionPanel:
         self._run_btn.config(state="normal")
         self._stop_btn.config(state="disabled")
 
+    # ─────────────────────────────────────────────
+    # 예측 이력 자동 저장
+    # ─────────────────────────────────────────────
+
+    def _log_predictions_to_history(self, results: list) -> None:
+        """멀티-호라이즌 예측 결과를 PredictionLogger에 append-only로 기록."""
+        try:
+            from history.logger import PredictionLogger
+            from history.schema import PredictionRecord
+
+            hist_dir = os.path.join(BASE_DIR, "outputs", "history")
+            pl = PredictionLogger(hist_dir)
+
+            saved = 0
+            for pred in results:
+                if pred.get("error") is not None:
+                    continue
+                sym = pred.get("symbol", "")
+                if not sym:
+                    continue
+                try:
+                    horizons = pred.get("horizons", {})
+                    h5 = horizons.get("5", {})
+                    rec = PredictionRecord(
+                        symbol               = sym,
+                        name                 = self._get_name(sym),
+                        model_version        = pred.get("model_version", ""),
+                        # primary (5d) 대표값
+                        predicted_direction  = h5.get("direction", "NEUTRAL"),
+                        prob_up              = float(h5.get("prob_up", 0.5)),
+                        predicted_return_pct = float(h5.get("return_pct", 0.0)),
+                        confidence           = h5.get("confidence", "LOW"),
+                        action               = h5.get("action", "HOLD"),
+                        price_at_prediction  = float(pred.get("current_price", 0.0)),
+                        # 멀티-호라이즌 전체 저장
+                        horizons             = {
+                            k: {
+                                "direction":  v.get("direction", "NEUTRAL"),
+                                "prob_up":    round(float(v.get("prob_up", 0.5)), 4),
+                                "return_pct": round(float(v.get("return_pct", 0.0)), 4),
+                                "confidence": v.get("confidence", "LOW"),
+                                "action":     v.get("action", "HOLD"),
+                            }
+                            for k, v in horizons.items()
+                        },
+                        horizon_days         = 5,
+                        segment_length       = int(self.settings.roi.segment_length),
+                        lookahead            = int(self.settings.roi.lookahead),
+                        d_model              = int(self.settings.model.d_model),
+                        macro_sentiment      = float(pred.get("macro_sentiment", 0.0)),
+                        macro_event_tags     = pred.get("macro_event_tags", ""),
+                    )
+                    pl.append(rec)
+                    saved += 1
+                except Exception as _e:
+                    logger.debug("prediction log skip %s: %s", sym, _e)
+
+            if saved:
+                logger.info("Prediction history: %d records saved (multi-horizon)", saved)
+        except Exception as e:
+            logger.warning("Failed to log predictions to history: %s", e)
+
     def refresh_symbols(self):
         """데이터 탭에서 종목 변경 시 호출 — 대상 종목 표시 업데이트."""
         self._update_target_symbols_label()
@@ -742,7 +899,11 @@ class PredictionPanel:
             if not syms:
                 self._target_var.set("대상 종목: 없음  (데이터 탭에서 추가하세요)")
                 return
-            names = [f"{self._get_name(s)} ({s.split('.')[0]})" for s in syms]
-            self._target_var.set(f"대상 종목 ({len(syms)}개): " + "  |  ".join(names))
+            names = [f"{self._get_name(s)}({s.split('.')[0]})" for s in syms]
+            MAX = 6
+            shown = names[:MAX]
+            rest  = len(names) - MAX
+            text  = "  |  ".join(shown) + (f"  +{rest}개" if rest > 0 else "")
+            self._target_var.set(f"대상 ({len(syms)}개): " + text)
         except Exception:
             pass

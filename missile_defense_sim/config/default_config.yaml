@@ -1,0 +1,75 @@
+simulation:
+  dt: 0.05              # integration step (seconds)
+  max_duration: 250     # max simulation time (seconds)
+  mode: single          # single | montecarlo
+  n_trials: 100         # Monte Carlo trial count
+  random_seed: 42
+
+radar:
+  range_max: 80000      # detection range (m)
+  fov_elevation_min: 0  # degrees (0 = horizon-to-zenith)
+  fov_elevation_max: 88
+  noise_std_position: 50.0    # Gaussian position noise (m)
+  noise_std_velocity: 5.0     # Gaussian velocity noise (m/s)
+  update_interval: 0.5        # track update period (s)
+  ecm_enabled: false
+  ecm_noise_multiplier: 6.0   # noise scale when ECM active
+  kalman:
+    process_noise: 20.0       # Q scale
+    measurement_noise: 50.0   # R scale
+
+targets:
+  n_targets: 3
+  types_distribution:         # weights for random selection
+    ballistic: 0.4
+    cruise: 0.4
+    evasive: 0.2
+  ballistic:
+    speed: 900                # m/s (~Mach 2.6 re-entry)
+    launch_range: 45000       # initial horizontal range (m)
+    launch_altitude: 18000    # initial altitude (m)
+    drag_coeff: 0.006         # k = 0.5*rho*Cd*A  (SI: kg/m)
+    mass: 500                 # kg
+  cruise:
+    speed: 250                # m/s
+    altitude: 500             # cruise altitude (m)
+    launch_range: 40000
+    drag_coeff: 0.006
+    mass: 600
+  evasive:
+    speed: 300                # m/s
+    altitude: 2500
+    launch_range: 38000
+    evasion_interval: 4.0     # seconds between maneuvers
+    evasion_magnitude: 30.0   # m/s² lateral thrust
+    drag_coeff: 0.006
+    mass: 500
+
+interceptor:
+  max_speed: 1200             # m/s
+  max_accel: 294.0            # m/s² (~30 G)
+  g_limit: 30                 # structural G limit
+  drag_coeff: 0.004           # k = 0.5*rho*Cd*A for interceptor
+  mass: 200                   # kg
+  kill_radius: 30.0           # lethal radius (m)
+  max_range: 70000            # max flyout range (m)
+  max_flight_time: 90.0       # seconds before self-destruct
+
+guidance:
+  type: PN                    # PN | pursuit
+  navigation_constant: 5.0
+
+engagement:
+  max_interceptors_in_air: 8
+  interceptors_per_target: 1  # salvo count
+  assignment_method: greedy   # greedy | hungarian
+  launch_zone:
+    range_min: 3000
+    range_max: 65000
+    elevation_min_deg: 0
+    elevation_max_deg: 88
+  min_intercept_altitude: 300 # m — don't engage below this
+  tti_threshold: 240.0        # only engage if TTI < this (s)
+  threat_weight_tti: 0.5
+  threat_weight_range: 0.3
+  threat_weight_speed: 0.2

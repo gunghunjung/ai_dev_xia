@@ -23,15 +23,21 @@ from risk import RiskManager
 from evaluation import PerformanceEvaluator
 from gui.tooltip import add_tooltip
 from gui.ui_meta import METRIC_DESCRIPTIONS
+from backtest.session_store import BacktestSessionStore
+from history.schema import BacktestSession
 
 logger = logging.getLogger("quant.gui.backtest")
 
 
 class BacktestPanel:
-    def __init__(self, parent, settings: AppSettings):
+    def __init__(self, parent, settings: AppSettings, on_complete=None):
         self.settings = settings
+        self._complete_cb = on_complete   # 외부 완료 콜백 (main_window용)
+        # ↑ 주의: 이름을 _on_complete 로 하면 아래 def _on_complete(self) 메서드를
+        #   인스턴스 속성이 가려(shadow)버려 버튼 재활성화가 안 되는 버그 발생.
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
+        self._pending_equity: "pd.Series | None" = None   # 캔버스 미배치 시 재시도용
 
         self.frame = ttk.Frame(parent)
         self._build()
@@ -58,15 +64,15 @@ class BacktestPanel:
         ).pack(side="left")
 
         # ── 대상 종목 표시 띠 ─────────────────────────
-        sym_bar = tk.Frame(self.frame, bg="#0f1a2a", pady=4)
+        sym_bar = tk.Frame(self.frame, bg="#0f1a2a", height=26)
         sym_bar.pack(fill="x", padx=6, pady=(0, 2))
+        sym_bar.pack_propagate(False)
         tk.Label(sym_bar, text="🎯 백테스트 대상:", bg="#0f1a2a", fg="#89b4fa",
                  font=("맑은 고딕", 9, "bold")).pack(side="left", padx=(10, 6))
         self._sym_bar_var = tk.StringVar(value="")
         tk.Label(sym_bar, textvariable=self._sym_bar_var,
                  bg="#0f1a2a", fg="#cdd6f4",
-                 font=("맑은 고딕", 9),
-                 wraplength=1100, justify="left").pack(side="left")
+                 font=("맑은 고딕", 9), anchor="w").pack(side="left", fill="x", expand=True)
         self._refresh_sym_bar()
 
         pane = tk.PanedWindow(self.frame, orient="horizontal",
@@ -75,8 +81,8 @@ class BacktestPanel:
 
         left  = ttk.LabelFrame(pane, text="백테스트 설정", padding=10)
         right = ttk.Frame(pane)
-        pane.add(left,  minsize=290)
-        pane.add(right, minsize=720)
+        pane.add(left,  minsize=220)
+        pane.add(right, minsize=520)
 
         self._build_left(left)
         self._build_right(right)
@@ -103,8 +109,12 @@ class BacktestPanel:
                 self._name_cache[s] = get_name(s)
             name = self._name_cache[s]
             code = s.split(".")[0]
-            parts.append(f"{name} ({code})" if name and name != s else s)
-        self._sym_bar_var.set(f"총 {len(syms)}개:  " + "  |  ".join(parts))
+            parts.append(f"{name}({code})" if name and name != s else s)
+        MAX = 6
+        shown = parts[:MAX]
+        rest  = len(parts) - MAX
+        text  = "  |  ".join(shown) + (f"  +{rest}개" if rest > 0 else "")
+        self._sym_bar_var.set(f"총 {len(syms)}개:  " + text)
 
     def _build_left(self, parent):
         row = 0
@@ -396,6 +406,9 @@ class BacktestPanel:
         self.equity_canvas = tk.Canvas(parent, bg="#181825",
                                        highlightthickness=0)
         self.equity_canvas.pack(fill="both", expand=True, padx=4, pady=4)
+        # 탭이 숨겨진 채로 백테스트가 완료될 경우 캔버스가 1×1 → 재시도용 저장소
+        self._pending_equity: "pd.Series | None" = None
+        self.equity_canvas.bind("<Configure>", self._on_equity_canvas_configure)
 
     def _build_wf_tab(self, parent):
         cols = ("윈도우", "학습시작", "학습종료", "테스트시작", "테스트종료",
@@ -522,6 +535,11 @@ class BacktestPanel:
                 max_weight=self.settings.portfolio.max_weight,
                 target_vol=self.settings.portfolio.target_volatility,
             )
+            risk_mgr = RiskManager(
+                vol_target=self.settings.risk.vol_target,
+                max_drawdown_limit=self.settings.risk.max_drawdown_limit,
+                kill_switch_sharpe=self.settings.risk.kill_switch_sharpe,
+            )
 
             def strategy_fn(train_data: pd.DataFrame):
                 """
@@ -565,9 +583,14 @@ class BacktestPanel:
                                 except Exception:
                                     pass
 
+                            _ts_mode   = _cfg.get("ts_mode", "scalar")
+                            _seg_len   = int(segs.shape[1])
+                            _ts_indim  = (int(segs.shape[2])      # 5 (segment mode)
+                                          if _ts_mode == "segment"
+                                          else _cfg.get("ts_input_dim", 32))
                             mdl = HybridModel(
                                 img_in_channels=imgs.shape[1],
-                                ts_input_dim=_cfg.get("ts_input_dim", 32),
+                                ts_input_dim=_ts_indim,
                                 cnn_out_dim=_cfg.get("cnn_out_dim", 128),
                                 d_model=_cfg.get("d_model", self.settings.model.d_model),
                                 nhead=_cfg.get("nhead", self.settings.model.nhead),
@@ -576,11 +599,17 @@ class BacktestPanel:
                                 dim_feedforward=_cfg.get("dim_feedforward",
                                                          self.settings.model.dim_feedforward),
                                 dropout=_cfg.get("dropout", self.settings.model.dropout),
+                                max_seq_len=_seg_len + 10,
                             )
-                            ckpt = store.load(mdl, sym, device="cpu")
+                            import torch as _t2
+                            _bt_device = "cuda" if _t2.cuda.is_available() else "cpu"
+                            ckpt = store.load(mdl, sym, device=_bt_device)
                             if ckpt:
-                                trainer = ModelTrainer(mdl, device="cpu")
-                                mu_arr, sigma_arr = trainer.predict(imgs, ts_f)
+                                trainer = ModelTrainer(mdl, device=_bt_device)
+                                # ts_mode에 따라 올바른 입력 전달
+                                _ts_input = (segs[-use_n:].astype(np.float32)
+                                             if _ts_mode == "segment" else ts_f)
+                                mu_arr, sigma_arr = trainer.predict(imgs, _ts_input)
                                 preds[sym] = (float(mu_arr.mean()),
                                               float(sigma_arr.mean()))
                                 continue
@@ -605,6 +634,13 @@ class BacktestPanel:
 
                 # ⚠️  포트폴리오 구성 시 train_ret만 사용 (테스트 기간 참조 금지)
                 weights = port_ctor.construct(signal_df, train_ret)
+
+                # 리스크 조정 (변동성 타겟팅 + 킬스위치)
+                port_ret = train_ret[list(weights.keys())].mean(axis=1) if weights else pd.Series(dtype=float)
+                weights = risk_mgr.adjust_weights(weights, port_ret, 1.0)
+                if not weights:
+                    # 킬스위치 발동 → 현금 보유
+                    return lambda date, hist: {}
 
                 # 고정 비중 반환 클로저
                 _fixed_weights = dict(weights)
@@ -651,6 +687,14 @@ class BacktestPanel:
             self._log(report)
 
             self.frame.after(0, lambda: self._show_results(result))
+            if self._complete_cb:
+                self.frame.after(0, self._complete_cb)
+
+            # ── 6. 세션 자동 저장 (감사 추적) ──────────────────────────────────
+            try:
+                self._auto_save_session(result, params, symbols)
+            except Exception as _se:
+                self._log(f"⚠️  세션 저장 실패 (결과에는 영향 없음): {_se}")
 
         except Exception as e:
             import traceback
@@ -709,6 +753,63 @@ class BacktestPanel:
                 f"{wf.get('sortino_ratio', 0) or 0:.3f}",
                 f"{wf.get('win_rate', 0) or 0:.1%}",
             ))
+
+    # ─────────────────────────────────────────────
+    # 백테스트 세션 자동 저장 (감사 추적)
+    # ─────────────────────────────────────────────
+
+    def _auto_save_session(self, result, params: dict, symbols: list) -> None:
+        """BacktestResult → BacktestSession → BacktestSessionStore 자동 저장."""
+        store_dir = os.path.join(BASE_DIR, "outputs", "backtest_sessions")
+        store = BacktestSessionStore(store_dir)
+        m = result.metrics
+
+        eq = result.equity_curve
+        trades_list = []
+        for t in result.trades:
+            try:
+                trades_list.append({
+                    "date":       str(t.date.date()) if hasattr(t.date, "date") else str(t.date),
+                    "symbol":     t.symbol,
+                    "action":     t.action,
+                    "shares":     float(t.shares),
+                    "price":      float(t.price),
+                    "commission": float(t.commission),
+                    "pnl_pct":    float(getattr(t, "pnl_pct", 0.0)),
+                })
+            except Exception:
+                continue
+
+        session = BacktestSession(
+            strategy_config  = {
+                "signal_method": self.param_vars.get("signal", tk.StringVar()).get(),
+                "signal_source": self.param_vars.get("sig_src", tk.StringVar()).get(),
+                "method":        self.param_vars.get("method", tk.StringVar()).get(),
+                "rebal":         self.param_vars.get("rebal",  tk.StringVar()).get(),
+            },
+            capital          = params["capital"],
+            transaction_cost = params["tx_cost"] / 100,
+            slippage         = params["slippage"] / 100,
+            execution_delay  = int(params["delay"]),
+            train_days       = int(params["train_days"]),
+            test_days        = int(params["test_days"]),
+            step_days        = int(params["step_days"]),
+            symbols          = symbols,
+            total_return_pct = float(m.get("total_return", 0) or 0) * 100,
+            cagr             = float(m.get("cagr", 0) or 0) * 100,
+            max_drawdown     = float(m.get("max_drawdown", 0) or 0) * 100,
+            sharpe           = float(m.get("sharpe_ratio", 0) or 0),
+            sortino          = float(m.get("sortino_ratio", 0) or 0),
+            win_rate         = float(m.get("win_rate", 0) or 0),
+            n_windows        = int(m.get("n_windows", 0) or 0),
+            n_trades         = len(trades_list),
+            equity_curve     = [float(v) for v in eq.values],
+            equity_dates     = [str(d.date()) for d in eq.index] if hasattr(eq.index[0], "date") else [str(d) for d in eq.index],
+            wf_results       = result.walk_forward_results or [],
+            trades           = trades_list,
+        )
+        sid = store.save(session)
+        self._log(f"✅ 백테스트 세션 저장 완료 → {sid[:8]}...  (outputs/backtest_sessions/)")
 
     def _update_interpretation(self, m: dict):
         """백테스트 결과를 초보자 언어로 해석하여 interp_lbl에 표시"""
@@ -807,12 +908,28 @@ class BacktestPanel:
 
         self.interp_var.set("\n".join(lines))
 
-    def _draw_equity_curve(self, equity: pd.Series):
+    def _on_equity_canvas_configure(self, event=None):
+        """탭 전환·리사이즈 시 pending 자산곡선을 다시 그린다."""
+        if self._pending_equity is not None and len(self._pending_equity) >= 2:
+            self._draw_equity_curve(self._pending_equity)
+
+    def _draw_equity_curve(self, equity: pd.Series, _retry: int = 0):
+        """자산 곡선 그리기. 캔버스 크기가 아직 확정 안 됐으면 최대 10회 재시도."""
+        # pending 에 저장해 두면 탭 전환 시에도 재그릴 수 있음
+        self._pending_equity = equity
+
         canvas = self.equity_canvas
         canvas.update_idletasks()
         W, H = canvas.winfo_width(), canvas.winfo_height()
         canvas.delete("all")
-        if W < 50 or H < 50 or len(equity) < 2:
+
+        if W < 50 or H < 50:
+            # 캔버스가 아직 배치되지 않은 경우 → 잠시 후 재시도 (최대 10회, 2초)
+            if _retry < 10:
+                self.frame.after(200, lambda: self._draw_equity_curve(equity, _retry + 1))
+            return
+
+        if len(equity) < 2:
             return
 
         pad = 55

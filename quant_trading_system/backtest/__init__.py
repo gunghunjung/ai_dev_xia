@@ -1,2 +1,4 @@
 from .engine import BacktestEngine
-__all__ = ["BacktestEngine"]
+from .session_store import BacktestSessionStore
+
+__all__ = ["BacktestEngine", "BacktestSessionStore"]

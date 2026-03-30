@@ -52,3 +52,10 @@ RuntimeError: Cannot open source: 0
 2026-03-18 04:38:35,738 [INFO] FrameLogger: CSV exported: logs\frame_log_20260318_043835.csv (3217 rows)
 2026-03-18 04:38:35,805 [INFO] FrameLogger: JSON exported: logs\frame_log_20260318_043835.json (3217 frames)
 2026-03-18 04:38:35,806 [INFO] gui.workers: EngineWorker: finished  frames=3217  events=0
+2026-03-29 14:27:22,767 [INFO] gui.workers: EngineWorker: initialising …
+2026-03-29 14:27:23,032 [INFO] ai.model_manager: PlaceholderModel: ignoring path '', using random outputs
+2026-03-29 14:27:23,033 [INFO] ai.model_manager: Default model ready (type=placeholder)
+2026-03-29 14:27:23,034 [INFO] gui.workers: EngineWorker: loop started
+2026-03-29 14:28:13,613 [INFO] FrameLogger: CSV exported: logs\frame_log_20260329_142813.csv (1742 rows)
+2026-03-29 14:28:13,657 [INFO] FrameLogger: JSON exported: logs\frame_log_20260329_142813.json (1742 frames)
+2026-03-29 14:28:13,657 [INFO] gui.workers: EngineWorker: finished  frames=1742  events=0

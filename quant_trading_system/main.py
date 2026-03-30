@@ -70,6 +70,12 @@ def run_gui():
     """GUI 모드 실행"""
     import tkinter as tk
     from gui import run_app
+    from config import load_settings
+    from utils.logger import setup_logger
+
+    settings = load_settings()
+    setup_logger("quant", settings.log_level,
+                 os.path.join(BASE_DIR, settings.output_dir))
 
     print("퀀트 트레이딩 시스템 시작...")
     run_app()

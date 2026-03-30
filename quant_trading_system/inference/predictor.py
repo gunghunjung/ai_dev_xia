@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import datetime
 import logging
+import math
 import os
 import sys
 from typing import Any, Dict, List, Optional, Tuple
@@ -32,7 +33,7 @@ sys.path.insert(0, BASE_DIR)
 
 from config import AppSettings
 from data import DataLoader
-from features import CVFeatureExtractor, TSFeatureExtractor
+from features import CVFeatureExtractor, TSFeatureExtractor, ROIDetector
 from models.hybrid import HybridModel
 from models.store import ModelStore
 from models.trainer import ModelTrainer
@@ -65,10 +66,10 @@ def _prob_up_gaussian(mu: float, sigma: float) -> float:
 
 def _normalize_segment_roi(seg: np.ndarray) -> np.ndarray:
     """
-    ROIDetector._normalize_segment() 와 IDENTICAL 한 정규화.
+    ROIDetector._normalize_segment() 를 직접 위임.
 
-    - OHLC: (price - first_close) / first_close  (상대 수익률 스케일)
-    - Volume: log1p → z-score
+    중복 구현을 제거하여 학습-추론 정규화 불일치(drift) 방지.
+    ROIDetector 쪽 정규화가 변경되면 이 함수도 자동 반영.
 
     Args:
         seg: (T, 5) raw OHLCV float array
@@ -76,20 +77,8 @@ def _normalize_segment_roi(seg: np.ndarray) -> np.ndarray:
     Returns:
         (T, 5) normalized float32 array
     """
-    result    = seg.copy().astype(float)
-    base_close = seg[0, 3] + 1e-10        # 첫 날 Close
-
-    # OHLC: 첫 날 종가 대비 상대값
-    result[:, :4] = (seg[:, :4] - base_close) / base_close
-
-    # Volume: log1p + z-score
-    vol     = np.maximum(seg[:, 4], 0.0)
-    log_vol = np.log1p(vol)
-    mu_v    = log_vol.mean()
-    std_v   = log_vol.std() + 1e-10
-    result[:, 4] = (log_vol - mu_v) / std_v
-
-    return result.astype(np.float32)
+    # ROIDetector 인스턴스 생성은 경량 — 학습 파라미터 불필요
+    return ROIDetector()._normalize_segment(seg).astype(np.float32)
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -164,6 +153,8 @@ class InferencePredictor:
             feat_cfg = raw.get("feature_config", {})  # 학습 시 피처 설정 (있으면)
 
             # ── 아키텍처 복원 ─────────────────────────────────────────────
+            _saved_seg_len = int(cfg.get("segment_length",
+                                         self.settings.roi.segment_length))
             model = HybridModel(
                 img_in_channels    = cfg.get("img_in_channels",    1),
                 cnn_channels       = cfg.get("cnn_channels",
@@ -181,6 +172,7 @@ class InferencePredictor:
                                               self.settings.model.dim_feedforward),
                 dropout            = cfg.get("dropout",
                                               self.settings.model.dropout),
+                max_seq_len        = _saved_seg_len + 10,  # CLS+segment 수용
             )
 
             ok = self._store.load(model, symbol, device=device)
@@ -201,6 +193,8 @@ class InferencePredictor:
                          or cfg.get("lookahead")
                          or self.settings.roi.lookahead)
 
+            ts_mode = cfg.get("ts_mode", "scalar")   # 새 모델: "segment", 구모델: "scalar"
+
             self._loaded[symbol] = {
                 "model":    model,
                 "trainer":  ModelTrainer(model, device=device),
@@ -209,6 +203,7 @@ class InferencePredictor:
                 "seg_len":  int(seg_len),
                 "img_size": int(img_size),
                 "lookahead":int(lookahead),
+                "ts_mode":  ts_mode,  # "segment" | "scalar"
             }
 
             logger.info(
@@ -321,26 +316,44 @@ class InferencePredictor:
         cv_ext = CVFeatureExtractor(image_size=img_size)
         images = cv_ext.transform(seg_batch)             # (1, C, H, W)
 
-        # ⑨ TS 피처 (정량 시계열 피처)
-        ts_ext   = TSFeatureExtractor(n_features=32)
-        ts_feats = ts_ext.transform(seg_batch)           # (1, 32)
+        # ⑨ TS 시퀀스 결정 — ts_mode에 따라 분기
+        #   "segment" : 학습과 동일하게 정규화된 OHLCV 세그먼트를 그대로 전달
+        #               → (1, T, 5), Transformer가 실제 시계열을 어텐션 가능
+        #   "scalar"  : 과거 방식 — 32개 스칼라 피처 → (1, 1, 32) T=1
+        ts_mode = model_info.get("ts_mode", "scalar")
 
-        # ⑩ 최종 NaN/Inf 검증
+        if ts_mode == "segment":
+            # seg_batch: (1, T, 5) — 이미 정규화됨 (⑦에서 생성)
+            ts_seq = seg_batch.astype(np.float32)         # (1, T, 5)
+            if np.isnan(ts_seq).any() or np.isinf(ts_seq).any():
+                raise ValueError(f"[{symbol}] 세그먼트 TS에 NaN/Inf 발생")
+            expected_ts = model_info.get("config", {}).get("ts_input_dim", 5)
+            if ts_seq.shape[2] != expected_ts:
+                raise ValueError(
+                    f"[{symbol}] 세그먼트 채널 불일치: "
+                    f"현재 {ts_seq.shape[2]} ≠ 학습 시 {expected_ts}\n"
+                    "모델을 재학습하세요."
+                )
+        else:
+            # 하위 호환 스칼라 모드
+            ts_ext   = TSFeatureExtractor(n_features=32)
+            ts_feats = ts_ext.transform(seg_batch)        # (1, 32)
+            if np.isnan(ts_feats).any() or np.isinf(ts_feats).any():
+                raise ValueError(f"[{symbol}] TS 스칼라 피처에 NaN/Inf 발생")
+            expected_ts = model_info.get("config", {}).get("ts_input_dim", 32)
+            if ts_feats.shape[1] != expected_ts:
+                raise ValueError(
+                    f"[{symbol}] TS 피처 차원 불일치: "
+                    f"현재 {ts_feats.shape[1]} ≠ 학습 시 {expected_ts}\n"
+                    "모델을 재학습하거나 설정을 확인하세요."
+                )
+            ts_seq = ts_feats.astype(np.float32)
+
+        # ⑩ CV 피처 최종 NaN/Inf 검증
         if np.isnan(images).any() or np.isinf(images).any():
             raise ValueError(f"[{symbol}] CV 피처에 NaN/Inf 발생")
-        if np.isnan(ts_feats).any() or np.isinf(ts_feats).any():
-            raise ValueError(f"[{symbol}] TS 피처에 NaN/Inf 발생")
 
-        # ⑪ 모델 입력 차원 일치 검증
-        expected_ts = model_info.get("config", {}).get("ts_input_dim", 32)
-        if ts_feats.shape[1] != expected_ts:
-            raise ValueError(
-                f"[{symbol}] TS 피처 차원 불일치: "
-                f"현재 {ts_feats.shape[1]} ≠ 학습 시 {expected_ts}\n"
-                "모델을 재학습하거나 설정을 확인하세요."
-            )
-
-        return images.astype(np.float32), ts_feats.astype(np.float32)
+        return images.astype(np.float32), ts_seq
 
     # ══════════════════════════════════════════════════════════════════════════
     # 3. 단일 종목 예측
@@ -383,9 +396,29 @@ class InferencePredictor:
                 df, symbol, as_of_date=as_of_date
             )
 
+            # ── 뉴스 AI 피처 (선택적) ─────────────────────────────────────
+            news_feats_arr: Optional[np.ndarray] = None
+            cfg = model_info.get("config", {})
+            if cfg.get("use_news", False) and self.settings.news.enabled:
+                try:
+                    from features.news_features import get_news_feature_generator
+                    gen = get_news_feature_generator()
+                    ref_dt = (as_of_date.to_pydatetime()
+                              if as_of_date is not None
+                              else datetime.datetime.now())
+                    news_vec = gen.build_features(
+                        symbol=symbol,
+                        reference_time=ref_dt,
+                        use_cache=True,
+                    )
+                    news_feats_arr = news_vec[np.newaxis, :]  # (1, 40)
+                except Exception as ne:
+                    logger.debug(f"[{symbol}] 뉴스 피처 로드 실패 (무시): {ne}")
+
             # ── 모델 추론 ─────────────────────────────────────────────────
             trainer         = model_info["trainer"]
-            mu_arr, sig_arr = trainer.predict(images, ts_feats)
+            mu_arr, sig_arr = trainer.predict(images, ts_feats,
+                                               news_feats=news_feats_arr)
 
             mu    = float(mu_arr[0])
             sigma = max(float(sig_arr[0]), 1e-8)
@@ -398,6 +431,36 @@ class InferencePredictor:
             if abs(mu) > self._MU_CLIP:
                 logger.warning(f"[{symbol}] 비현실적 mu={mu:.3f} → 클리핑")
                 mu = float(np.clip(mu, -self._MU_CLIP, self._MU_CLIP))
+
+            # ── GBM 기반 기간 스케일링 ────────────────────────────────────
+            # 모델은 baseline_days 기준으로 학습됨(보통 5일).
+            # 요청 기간(lookahead)이 다를 경우 표준 브라운 운동 가정으로 스케일링:
+            #   μ_h  = μ_base × (h / baseline)        ← 기대수익률: 시간에 선형 비례
+            #   σ_h  = σ_base × √(h / baseline)       ← 변동성: 루트-T 법칙
+            baseline   = model_info.get("lookahead", 5)
+            time_scale = lookahead / max(baseline, 1)
+            mu    = mu    * time_scale
+            sigma = max(sigma * math.sqrt(time_scale), 1e-8)
+
+            # 스케일 후 비현실적 값 방어 (장기 예측은 200% 초과 가능하나 10배 이상은 클리핑)
+            max_mu = self._MU_CLIP * max(time_scale, 1.0)
+            mu = float(np.clip(mu, -max_mu, max_mu))
+
+            # ── 뉴스 AI 감성 보정 (항상 적용 — DB 데이터 있을 때) ────────
+            # news_events Layer2 DB에서 최근 3일 AI 분류 결과 가중 평균 감성
+            # 최대 ±0.5% 수익률 미세 보정 (모델 신호를 압도하지 않는 범위)
+            _NEWS_BIAS_SCALE = 0.005
+            ref_dt = (as_of_date.to_pydatetime()
+                      if as_of_date is not None
+                      else datetime.datetime.now())
+            news_sentiment = self._get_news_sentiment(ref_dt)
+            mu = float(np.clip(
+                mu + news_sentiment * _NEWS_BIAS_SCALE, -max_mu, max_mu
+            ))
+
+            # ── 예상 가격 계산 ────────────────────────────────────────────
+            # 단순 수익률 가정: predicted_price = current_price × (1 + μ_h)
+            predicted_price = current_price * (1.0 + mu)
 
             # ── 통계적 파생 지표 ──────────────────────────────────────────
             prob_up   = _prob_up_gaussian(mu, sigma)
@@ -429,14 +492,24 @@ class InferencePredictor:
 
             # ── 한국어 설명 생성 ──────────────────────────────────────────
             explanation = self._make_explanation(
-                symbol, direction, prob_up, mu, sigma, lookahead, confidence
+                symbol, direction, prob_up, mu, sigma, lookahead, confidence,
+                current_price=current_price, baseline=baseline,
             )
+            # 뉴스 감성 보정 내용 설명에 추가
+            if abs(news_sentiment) > 0.05:
+                ns_label = "호재" if news_sentiment > 0 else "악재"
+                ns_adj   = news_sentiment * _NEWS_BIAS_SCALE * 100
+                explanation += (
+                    f"\n[뉴스 감성] {ns_label} ({news_sentiment:+.2f}) → "
+                    f"수익률 {ns_adj:+.3f}% 보정 반영 (최근 3일 AI 분류)"
+                )
 
             result: Dict[str, Any] = {
                 "symbol":           symbol,
                 "current_price":    current_price,
-                "predicted_return": mu,
-                "uncertainty":      sigma,
+                "predicted_price":  predicted_price,       # ← 예상 가격 (신규)
+                "predicted_return": mu,                    # 스케일된 μ_h
+                "uncertainty":      sigma,                 # 스케일된 σ_h
                 "prob_up":          prob_up,
                 "prob_down":        prob_down,
                 "snr":              snr,
@@ -444,6 +517,9 @@ class InferencePredictor:
                 "confidence":       confidence,
                 "action":           action,
                 "horizon_days":     lookahead,
+                "baseline_lookahead": baseline,            # 모델 훈련 기준 기간
+                "time_scale":       time_scale,            # h / baseline
+                "news_sentiment":   news_sentiment,        # 최근 뉴스 AI 감성 (-1~+1)
                 "explanation":      explanation,
                 "timestamp":        datetime.datetime.now(),
                 "as_of_date":       df.index[-1] if len(df) > 0 else None,
@@ -465,6 +541,272 @@ class InferencePredictor:
         except Exception as exc:
             logger.error(f"[{symbol}] 예측 실패: {exc}", exc_info=True)
             return self._error_result(symbol, str(exc))
+
+    # ══════════════════════════════════════════════════════════════════════════
+    # 3b. 멀티-호라이즌 통합 예측  (2단계: 1d / 3d / 5d / 20d 동시 출력)
+    # ══════════════════════════════════════════════════════════════════════════
+
+    # 표준 horizon 목록 (변경 가능)
+    MULTI_HORIZONS: List[int] = [1, 3, 5, 20]
+
+    def predict_multi_horizon(
+        self,
+        symbol:      str,
+        df:          pd.DataFrame,
+        as_of_date:  Optional[pd.Timestamp] = None,
+        macro_vec:   Optional[np.ndarray]   = None,
+    ) -> Dict[str, Any]:
+        """
+        단일 종목에 대해 1d / 3d / 5d / 20d 예측을 한 번의 추론으로 동시 생성합니다.
+
+        원칙:
+          - 피처 추출 1회, 모델 추론 1회 (성능 효율)
+          - GBM 기반 horizon 스케일링 (μ∝h, σ∝√h)
+          - 결과는 PredictionRecord.horizons 형식에 맞게 반환
+
+        Returns
+        -------
+        {
+          "symbol":     str,
+          "name":       str,
+          "current_price": float,
+          "horizons": {
+            "1":  {"direction", "prob_up", "return_pct", "confidence", "action",
+                   "predicted_price"},
+            "3":  {...},
+            "5":  {...},
+            "20": {...},
+          },
+          "primary_horizon": int,   # 대표 horizon (5d)
+          "primary": {...},         # 대표 horizon 결과 (위 horizons["5"])
+          "macro_sentiment": float,
+          "macro_event_tags": str,
+          "timestamp": datetime,
+          "as_of_date": pd.Timestamp | None,
+          "error": None | str,
+        }
+        """
+        if symbol not in self._loaded:
+            return self._error_result_multi(symbol, "모델이 로드되지 않았습니다")
+
+        model_info    = self._loaded[symbol]
+        baseline      = model_info.get("lookahead", 5)
+        current_price = float(df["Close"].iloc[-1]) if len(df) > 0 else 0.0
+
+        try:
+            # ① 피처 추출 (1회)
+            images, ts_feats = self.prepare_features_for_inference(
+                df, symbol, as_of_date=as_of_date
+            )
+
+            # ① 뉴스 AI 피처 (predict_future와 동일한 로직)
+            news_feats_arr: Optional[np.ndarray] = None
+            cfg = model_info.get("config", {})
+            if cfg.get("use_news", False) and self.settings.news.enabled:
+                try:
+                    from features.news_features import get_news_feature_generator
+                    gen = get_news_feature_generator()
+                    ref_dt = (as_of_date.to_pydatetime()
+                              if as_of_date is not None
+                              else datetime.datetime.now())
+                    news_vec = gen.build_features(
+                        symbol=symbol, reference_time=ref_dt, use_cache=True)
+                    news_feats_arr = news_vec[np.newaxis, :]
+                except Exception as ne:
+                    logger.debug(f"[{symbol}] multi-horizon 뉴스 피처 실패 (무시): {ne}")
+
+            # ② 모델 추론 (1회)
+            trainer         = model_info["trainer"]
+            mu_arr, sig_arr = trainer.predict(images, ts_feats,
+                                               news_feats=news_feats_arr)
+
+            mu_base    = float(mu_arr[0])
+            sigma_base = max(float(sig_arr[0]), 1e-8)
+
+            if np.isnan(mu_base) or np.isnan(sigma_base):
+                return self._error_result_multi(
+                    symbol, "모델 예측값이 NaN — 재학습 필요"
+                )
+
+            # ② 뉴스 AI 감성 보정 — base mu에 미세 적용
+            _NEWS_BIAS_SCALE = 0.005
+            ref_dt_multi = (as_of_date.to_pydatetime()
+                            if as_of_date is not None
+                            else datetime.datetime.now())
+            news_sentiment_multi = self._get_news_sentiment(ref_dt_multi)
+            mu_base = float(np.clip(
+                mu_base + news_sentiment_multi * _NEWS_BIAS_SCALE,
+                -self._MU_CLIP, self._MU_CLIP
+            ))
+
+            # ③ 각 horizon별 GBM 스케일링 + 분류
+            horizons_out: Dict[str, Dict[str, Any]] = {}
+            for h in self.MULTI_HORIZONS:
+                ts = h / max(baseline, 1)
+                mu_h    = float(np.clip(mu_base * ts,
+                                        -self._MU_CLIP * max(ts, 1.0),
+                                         self._MU_CLIP * max(ts, 1.0)))
+                sigma_h = max(sigma_base * math.sqrt(ts), 1e-8)
+
+                prob_up_h   = _prob_up_gaussian(mu_h, sigma_h)
+                prob_down_h = 1.0 - prob_up_h
+                snr_h       = abs(mu_h) / sigma_h
+
+                if prob_up_h >= self._PROB_BUY_THRESH and mu_h >= self._MU_MIN_SIGNAL:
+                    dir_h = "UP"
+                elif prob_down_h >= (1 - self._PROB_SELL_THRESH) and mu_h <= -self._MU_MIN_SIGNAL:
+                    dir_h = "DOWN"
+                else:
+                    dir_h = "NEUTRAL"
+
+                if snr_h >= self._SNR_HIGH and abs(prob_up_h - 0.5) >= 0.15:
+                    conf_h = "HIGH"
+                elif snr_h >= self._SNR_MEDIUM and abs(prob_up_h - 0.5) >= 0.08:
+                    conf_h = "MEDIUM"
+                else:
+                    conf_h = "LOW"
+
+                action_h = self.generate_signal_from_prediction(
+                    {"direction": dir_h, "confidence": conf_h,
+                     "prob_up": prob_up_h, "mu": mu_h}
+                )
+
+                predicted_price_h = current_price * (1.0 + mu_h)
+
+                horizons_out[str(h)] = {
+                    "direction":       dir_h,
+                    "prob_up":         round(prob_up_h,   4),
+                    "return_pct":      round(mu_h * 100,  4),
+                    "confidence":      conf_h,
+                    "action":          action_h,
+                    "predicted_price": round(predicted_price_h, 2),
+                    "sigma":           round(sigma_h, 4),
+                    "snr":             round(snr_h,   4),
+                }
+
+            # ④ 외부환경 요약
+            macro_sent  = 0.0
+            macro_tags  = ""
+            if macro_vec is not None and len(macro_vec) >= 4:
+                macro_sent = float(macro_vec[3])   # index 3: overall sentiment
+                tag_names  = ["FOMC","RATE","CPI","WAR","POLICY","EARNINGS","SUPPLY","FX","COMMODITY"]
+                flags      = macro_vec[4:13] if len(macro_vec) >= 13 else []
+                macro_tags = ",".join(
+                    n for n, f in zip(tag_names, flags) if f > 0.5
+                )
+
+            # ⑤ 대표 horizon (5d 기본, 없으면 마지막)
+            primary_h  = 5 if 5 in self.MULTI_HORIZONS else self.MULTI_HORIZONS[-1]
+            primary    = horizons_out[str(primary_h)]
+
+            result: Dict[str, Any] = {
+                "symbol":          symbol,
+                "name":            "",
+                "current_price":   current_price,
+                "horizons":        horizons_out,
+                "primary_horizon": primary_h,
+                "primary":         primary,
+                "macro_sentiment": macro_sent,
+                "macro_event_tags": macro_tags,
+                "news_sentiment":  news_sentiment_multi,   # 최근 뉴스 AI 감성
+                "baseline_lookahead": baseline,
+                "timestamp":       datetime.datetime.now(),
+                "as_of_date":      df.index[-1] if len(df) > 0 else None,
+                "error":           None,
+            }
+
+            logger.info(
+                f"[{symbol}] 멀티-호라이즌 예측 완료 | "
+                f"5d={horizons_out['5']['direction']} "
+                f"P(↑)={horizons_out['5']['prob_up']:.1%}"
+            )
+            return result
+
+        except Exception as exc:
+            logger.error(f"[{symbol}] 멀티-호라이즌 예측 실패: {exc}", exc_info=True)
+            return self._error_result_multi(symbol, str(exc))
+
+    def predict_all_multi_horizon(
+        self,
+        symbols:      List[str],
+        data_dict:    Dict[str, pd.DataFrame],
+        device:       str = "cpu",
+        macro_vec:    Optional[np.ndarray] = None,
+        high_conf_only: bool = False,
+        progress_cb=None,
+    ) -> List[Dict[str, Any]]:
+        """
+        모든 종목에 대해 멀티-호라이즌 통합 예측을 실행합니다.
+
+        Returns
+        -------
+        List[Dict] — primary 5d 예상 수익률 내림차순 정렬. 오류 종목은 맨 뒤.
+        """
+        results = []
+        total   = max(len(symbols), 1)
+
+        for i, sym in enumerate(symbols):
+            if progress_cb:
+                progress_cb(i / total, f"[{sym}] 통합 예측 중... ({i+1}/{total})")
+
+            if sym not in self._loaded:
+                ok = self.load_model(sym, device=device)
+                if not ok:
+                    results.append(self._error_result_multi(sym, "학습된 모델 없음"))
+                    continue
+
+            df = data_dict.get(sym)
+            if df is None or len(df) < 10:
+                results.append(self._error_result_multi(
+                    sym, "데이터 없음 — 데이터 탭에서 다운로드 필요"
+                ))
+                continue
+
+            pred = self.predict_multi_horizon(sym, df, macro_vec=macro_vec)
+            results.append(pred)
+
+        if progress_cb:
+            progress_cb(1.0, f"통합 예측 완료 ({len(results)}개 종목)")
+
+        valid   = [r for r in results if r["error"] is None]
+        invalid = [r for r in results if r["error"] is not None]
+
+        # 5d return_pct 내림차순 정렬
+        def _sort_key(r):
+            h5 = r.get("horizons", {}).get("5", {})
+            return h5.get("return_pct", -9999.0)
+
+        valid.sort(key=_sort_key, reverse=True)
+
+        if high_conf_only:
+            valid = [r for r in valid
+                     if r.get("horizons", {}).get("5", {}).get("confidence") == "HIGH"] + \
+                    [r for r in valid
+                     if r.get("horizons", {}).get("5", {}).get("confidence") != "HIGH"]
+
+        return valid + invalid
+
+    def _error_result_multi(self, symbol: str, msg: str) -> Dict[str, Any]:
+        """멀티-호라이즌 오류 결과 포맷."""
+        empty_h = {str(h): {
+            "direction": "NEUTRAL", "prob_up": 0.5, "return_pct": 0.0,
+            "confidence": "LOW",    "action":  "HOLD",
+            "predicted_price": 0.0, "sigma": 0.0, "snr": 0.0,
+        } for h in self.MULTI_HORIZONS}
+        return {
+            "symbol":           symbol,
+            "name":             "",
+            "current_price":    0.0,
+            "horizons":         empty_h,
+            "primary_horizon":  5,
+            "primary":          empty_h.get("5", {}),
+            "macro_sentiment":  0.0,
+            "macro_event_tags": "",
+            "baseline_lookahead": 0,
+            "timestamp":        datetime.datetime.now(),
+            "as_of_date":       None,
+            "error":            msg,
+        }
 
     # ══════════════════════════════════════════════════════════════════════════
     # 4. 전 종목 일괄 예측
@@ -714,21 +1056,80 @@ class InferencePredictor:
 
     # ── 설명 생성 ─────────────────────────────────────────────────────────────
 
+    # ══════════════════════════════════════════════════════════════════════════
+    # 뉴스 감성 보조 기능
+    # ══════════════════════════════════════════════════════════════════════════
+
+    def _get_news_sentiment(
+        self,
+        ref_dt: datetime.datetime,
+        days_back: int = 3,
+        limit: int = 150,
+    ) -> float:
+        """
+        DB news_events(Layer 2)에서 최근 AI 분류 감성 점수를 가중 평균으로 반환.
+        최신 기사에 더 높은 가중치 부여 (24h 이내 × 2, 48h 이내 × 1.5, 이후 × 1).
+
+        Returns: -1.0 ~ +1.0 (데이터 없으면 0.0)
+        """
+        try:
+            from data.news_db import get_news_db
+            db = get_news_db()
+            since = ref_dt - datetime.timedelta(days=days_back)
+            evts = db.get_events(since_dt=since, until_dt=ref_dt, limit=limit)
+            if not evts:
+                return 0.0
+            w_sum, s_sum = 0.0, 0.0
+            for e in evts:
+                try:
+                    pub = datetime.datetime.fromisoformat(e.get("published_at", ""))
+                except Exception:
+                    pub = ref_dt
+                age_h = max((ref_dt - pub).total_seconds() / 3600.0, 0)
+                w = 2.0 if age_h < 24 else (1.5 if age_h < 48 else 1.0)
+                w_sum += w
+                s_sum += float(e.get("sentiment_score", 0.0)) * w
+            score = s_sum / w_sum if w_sum > 0 else 0.0
+            return float(max(-1.0, min(1.0, score)))
+        except Exception as e:
+            logger.debug(f"뉴스 감성 로드 실패 (무시): {e}")
+            return 0.0
+
     def _make_explanation(
         self,
-        symbol:     str,
-        direction:  str,
-        prob_up:    float,
-        mu:         float,
-        sigma:      float,
-        lookahead:  int,
-        confidence: str,
+        symbol:          str,
+        direction:       str,
+        prob_up:         float,
+        mu:              float,     # 이미 horizon 스케일된 값
+        sigma:           float,     # 이미 horizon 스케일된 값
+        lookahead:       int,
+        confidence:      str,
+        current_price:   float = 0.0,
+        baseline:        int   = 5,
     ) -> str:
         """초보자 친화적 한국어 예측 설명을 생성합니다."""
-        week_str = (f"약 {lookahead // 5}주" if lookahead >= 5
-                    else f"{lookahead}일")
-        horizon  = f"향후 {lookahead}거래일({week_str})"
-        ret_pct  = mu * 100.0
+        # 기간 표현
+        if lookahead >= 252:
+            period_str = f"약 {lookahead // 252}년"
+        elif lookahead >= 21:
+            period_str = f"약 {lookahead // 21}달"
+        elif lookahead >= 5:
+            period_str = f"약 {lookahead // 5}주"
+        else:
+            period_str = f"{lookahead}일"
+        horizon = f"향후 {lookahead}거래일({period_str})"
+        ret_pct = mu * 100.0
+
+        # 예상 가격
+        price_line = ""
+        if current_price > 0:
+            pred_price = current_price * (1.0 + mu)
+            if current_price >= 1000:
+                price_line = (f"현재가 {current_price:,.0f}원 → "
+                              f"예상가 {pred_price:,.0f}원")
+            else:
+                price_line = (f"현재가 {current_price:.2f} → "
+                              f"예상가 {pred_price:.2f}")
 
         if direction == "UP":
             line1 = f"📈 상승 가능성이 높습니다  (상승 확률: {prob_up:.0%})"
@@ -746,9 +1147,15 @@ class InferencePredictor:
             "LOW":    "신뢰도: 낮음 ⚠️  (불확실성이 높습니다. 신중히 참고하세요)",
         }
         line3 = conf_map.get(confidence, "")
-        line4 = f"불확실성(σ): {sigma:.4f}  |  신호 강도(μ/σ): {abs(mu)/sigma:.2f}"
+        line4 = f"불확실성(σ): {sigma:.4f}  |  신호 강도(μ/σ): {abs(mu)/max(sigma,1e-8):.2f}"
+        line5 = (f"[기간 스케일링] 모델 기준 {baseline}일 → 요청 {lookahead}일 "
+                 f"(×{lookahead/max(baseline,1):.1f}배 스케일)")
 
-        return "\n".join([line1, line2, line3, line4])
+        parts = [line1, line2]
+        if price_line:
+            parts.append(price_line)
+        parts += [line3, line4, line5]
+        return "\n".join(parts)
 
     def _portfolio_summary(
         self,

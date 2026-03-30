@@ -7,6 +7,7 @@ import tkinter as tk
 from tkinter import ttk
 import logging
 import numpy as np
+from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, BASE_DIR)
@@ -32,6 +33,11 @@ class PortfolioPanel:
         self._stop_event = threading.Event()
         self._thread     = None
         self._name_cache: dict[str, str] = {}
+
+        self._rt_after_id: str | None = None   # after() 스케줄러 ID
+        self._rt_auto_on  = tk.BooleanVar(value=False)
+        self._rt_interval = tk.StringVar(value="30초")
+        self._rt_fetching = False
 
         self.frame = ttk.Frame(parent)
         self._build()
@@ -81,15 +87,15 @@ class PortfolioPanel:
         ).pack(side="left")
 
         # ── 대상 종목 띠 ─────────────────────────
-        sym_bar = tk.Frame(self.frame, bg="#0f1a2a", pady=4)
+        sym_bar = tk.Frame(self.frame, bg="#0f1a2a", height=26)
         sym_bar.pack(fill="x", padx=6, pady=(0, 2))
+        sym_bar.pack_propagate(False)
         tk.Label(sym_bar, text="🎯 대상 종목:", bg="#0f1a2a", fg="#89b4fa",
                  font=("맑은 고딕", 9, "bold")).pack(side="left", padx=(10, 6))
         self._sym_bar_var = tk.StringVar(value="")
         tk.Label(sym_bar, textvariable=self._sym_bar_var,
                  bg="#0f1a2a", fg="#cdd6f4",
-                 font=("맑은 고딕", 9),
-                 wraplength=1100, justify="left").pack(side="left")
+                 font=("맑은 고딕", 9), anchor="w").pack(side="left", fill="x", expand=True)
 
         # ── 상단 버튼 행 ─────────────────────────
         top_fr = tk.Frame(self.frame, bg="#1e1e2e", pady=4)
@@ -108,6 +114,12 @@ class PortfolioPanel:
                   foreground="#89b4fa",
                   font=("맑은 고딕", 9)).pack(side="left", padx=4)
 
+        # ── 실시간 시세 섹션 ─────────────────────
+        rt_frame = ttk.LabelFrame(self.frame, text="📡 실시간 시세 (yfinance · ~15분 지연)",
+                                  padding=(6, 4))
+        rt_frame.pack(fill="x", padx=6, pady=(0, 4))
+        self._build_realtime(rt_frame)
+
         # ── 메인 PanedWindow ─────────────────────
         pane = tk.PanedWindow(self.frame, orient="horizontal",
                               bg="#1e1e2e", sashwidth=4)
@@ -120,6 +132,53 @@ class PortfolioPanel:
 
         self._build_left(left)
         self._build_right(right)
+
+    def _build_realtime(self, parent):
+        # ── 컨트롤 행 ──────────────────────────
+        ctrl = tk.Frame(parent, bg="#1e1e2e")
+        ctrl.pack(fill="x", pady=(0, 4))
+
+        self._rt_btn = ttk.Button(ctrl, text="🔄 시세 조회",
+                                  command=self._fetch_realtime)
+        self._rt_btn.pack(side="left", padx=(0, 6))
+        add_tooltip(self._rt_btn, "등록된 모든 종목의 현재가를 yfinance로 조회합니다.\n(약 15분 지연)")
+
+        ttk.Label(ctrl, text="자동새로고침:").pack(side="left", padx=(8, 2))
+        interval_cb = ttk.Combobox(ctrl, textvariable=self._rt_interval,
+                                   values=["15초", "30초", "1분", "5분"],
+                                   width=5, state="readonly")
+        interval_cb.pack(side="left", padx=(0, 4))
+
+        self._rt_auto_chk = ttk.Checkbutton(
+            ctrl, text="자동", variable=self._rt_auto_on,
+            command=self._toggle_auto_refresh)
+        self._rt_auto_chk.pack(side="left", padx=(0, 10))
+        add_tooltip(self._rt_auto_chk, "켜면 선택한 간격으로 시세를 자동 갱신합니다.")
+
+        self._rt_status_var = tk.StringVar(value="조회 전")
+        ttk.Label(ctrl, textvariable=self._rt_status_var,
+                  foreground="#9399b2",
+                  font=("맑은 고딕", 8)).pack(side="left")
+
+        # ── 시세 테이블 ────────────────────────
+        cols = ("종목명", "현재가", "전일비", "등락률(%)", "고가", "저가", "거래량")
+        self._rt_tree = ttk.Treeview(parent, columns=cols,
+                                     show="headings", height=5)
+        widths = [150, 90, 90, 90, 80, 80, 100]
+        for col, w in zip(cols, widths):
+            self._rt_tree.heading(col, text=col)
+            self._rt_tree.column(col, width=w,
+                                 anchor="e" if col != "종목명" else "w")
+
+        vsb_rt = ttk.Scrollbar(parent, orient="vertical",
+                               command=self._rt_tree.yview)
+        self._rt_tree.configure(yscrollcommand=vsb_rt.set)
+        self._rt_tree.pack(side="left", fill="x", expand=True)
+        vsb_rt.pack(side="right", fill="y")
+
+        self._rt_tree.tag_configure("up",   foreground="#a6e3a1")
+        self._rt_tree.tag_configure("down", foreground="#f38ba8")
+        self._rt_tree.tag_configure("flat", foreground="#9399b2")
 
     def _build_left(self, parent):
         # 파이 차트
@@ -229,7 +288,11 @@ class PortfolioPanel:
             self._sym_bar_var.set("(등록된 종목 없음 — 데이터 탭에서 종목을 추가하세요)")
             return
         parts = [self._sym_label(s) for s in syms]
-        self._sym_bar_var.set(f"총 {len(syms)}개:  " + "  |  ".join(parts))
+        MAX = 6
+        shown = parts[:MAX]
+        rest  = len(parts) - MAX
+        text  = "  |  ".join(shown) + (f"  +{rest}개" if rest > 0 else "")
+        self._sym_bar_var.set(f"총 {len(syms)}개:  " + text)
 
     # ─────────────────────────────────────────────
     # 키보드 네비게이션
@@ -303,16 +366,43 @@ class PortfolioPanel:
 
                 if store.has_model(sym):
                     try:
-                        model = HybridModel(img_in_channels=1, ts_input_dim=32)
-                        ckpt  = store.load(model, sym, device="cpu")
+                        import torch as _pt
+                        _pf_device = "cuda" if _pt.cuda.is_available() else "cpu"
+
+                        # 저장된 config 먼저 읽어서 모델 파라미터 복원
+                        _ckpt_path = os.path.join(
+                            BASE_DIR, self.settings.model_dir,
+                            sym.replace(".", "_"), "latest.pt"
+                        )
+                        _cfg = {}
+                        if os.path.exists(_ckpt_path):
+                            try:
+                                _peeked = _pt.load(_ckpt_path, map_location="cpu",
+                                                   weights_only=False)
+                                _cfg = _peeked.get("config", {})
+                            except Exception:
+                                pass
+
+                        imgs = cv_ext.transform(use_segs)
+                        ts_f = ts_ext.transform(use_segs)
+
+                        model = HybridModel(
+                            img_in_channels=imgs.shape[1] if imgs.ndim >= 2 else 1,
+                            ts_input_dim=_cfg.get("ts_input_dim", ts_f.shape[-1] if ts_f.ndim >= 2 else 32),
+                            cnn_out_dim=_cfg.get("cnn_out_dim", 128),
+                            d_model=_cfg.get("d_model", self.settings.model.d_model),
+                            nhead=_cfg.get("nhead", self.settings.model.nhead),
+                            num_encoder_layers=_cfg.get("num_encoder_layers",
+                                                        self.settings.model.num_encoder_layers),
+                            dropout=_cfg.get("dropout", self.settings.model.dropout),
+                        )
+                        ckpt = store.load(model, sym, device=_pf_device)
                         if ckpt:
-                            imgs   = cv_ext.transform(use_segs)
-                            ts_f   = ts_ext.transform(use_segs)
-                            trainer = ModelTrainer(model, device="cpu")
+                            trainer = ModelTrainer(model, device=_pf_device)
                             mu_arr, sigma_arr = trainer.predict(imgs, ts_f)
-                            preds[sym]    = (float(mu_arr.mean()),
-                                             float(sigma_arr.mean()))
-                            model_loaded  = True
+                            preds[sym]   = (float(mu_arr.mean()),
+                                            float(sigma_arr.mean()))
+                            model_loaded = True
                     except Exception as e:
                         logger.debug(f"{sym} 모델 로드 실패: {e}")
 
@@ -424,3 +514,107 @@ class PortfolioPanel:
 
     def _set_status(self, msg: str):
         self.frame.after(0, lambda: self.status_var.set(msg))
+
+    # ─────────────────────────────────────────────
+    # 실시간 시세 조회
+    # ─────────────────────────────────────────────
+
+    _INTERVAL_MAP = {"15초": 15_000, "30초": 30_000, "1분": 60_000, "5분": 300_000}
+
+    def _fetch_realtime(self):
+        """백그라운드 스레드에서 실시간 시세 조회"""
+        if self._rt_fetching:
+            return
+        symbols = self.settings.data.symbols
+        if not symbols:
+            self._rt_status_var.set("종목 없음")
+            return
+        self._rt_fetching = True
+        self._rt_btn.config(state="disabled")
+        self._rt_status_var.set("조회 중…")
+        threading.Thread(target=self._fetch_thread, daemon=True).start()
+
+    def _fetch_thread(self):
+        try:
+            cache_dir = os.path.join(BASE_DIR, self.settings.data.cache_dir)
+            loader    = DataLoader(cache_dir)
+            symbols   = self.settings.data.symbols
+            prices    = loader.get_realtime_prices(symbols)
+            self.frame.after(0, lambda: self._update_rt_table(prices))
+        except Exception as e:
+            logger.error(f"실시간 시세 조회 오류: {e}")
+            self.frame.after(0, lambda: self._rt_status_var.set(f"오류: {e}"))
+        finally:
+            self._rt_fetching = False
+            self.frame.after(0, lambda: self._rt_btn.config(state="normal"))
+
+    def _update_rt_table(self, prices: dict):
+        self._rt_tree.delete(*self._rt_tree.get_children())
+
+        def _fmt_price(v, currency=""):
+            if v is None:
+                return "—"
+            if currency in ("KRW", ""):
+                return f"{v:,.0f}"
+            return f"{v:,.2f}"
+
+        def _fmt_vol(v):
+            if v is None:
+                return "—"
+            v = int(v)
+            if v >= 1_000_000:
+                return f"{v/1_000_000:.1f}M"
+            if v >= 1_000:
+                return f"{v/1_000:.0f}K"
+            return str(v)
+
+        for sym in self.settings.data.symbols:
+            d = prices.get(sym)
+            if d is None:
+                self._rt_tree.insert("", "end", tags=("flat",), values=(
+                    self._sym_label(sym), "—", "—", "—", "—", "—", "—"))
+                continue
+
+            cur   = d.get("currency", "")
+            chg   = d.get("change", 0) or 0
+            chgp  = d.get("change_pct", 0) or 0
+            tag   = "up" if chg > 0 else ("down" if chg < 0 else "flat")
+            sign  = "+" if chg >= 0 else ""
+
+            self._rt_tree.insert("", "end", tags=(tag,), values=(
+                self._sym_label(sym),
+                _fmt_price(d.get("price"),      cur),
+                f"{sign}{_fmt_price(chg, cur)}",
+                f"{sign}{chgp:.2f}%",
+                _fmt_price(d.get("high"),       cur),
+                _fmt_price(d.get("low"),        cur),
+                _fmt_vol(d.get("volume")),
+            ))
+
+        now = datetime.now().strftime("%H:%M:%S")
+        total = len(prices)
+        self._rt_status_var.set(f"최종 갱신: {now}  ({total}/{len(self.settings.data.symbols)}개 성공)")
+
+        # 자동갱신 재스케줄
+        if self._rt_auto_on.get():
+            self._schedule_next()
+
+    def _toggle_auto_refresh(self):
+        if self._rt_auto_on.get():
+            self._fetch_realtime()
+        else:
+            self._cancel_schedule()
+
+    def _schedule_next(self):
+        self._cancel_schedule()
+        ms = self._INTERVAL_MAP.get(self._rt_interval.get(), 30_000)
+        self._rt_after_id = self.frame.after(ms, self._auto_refresh_tick)
+
+    def _auto_refresh_tick(self):
+        if self._rt_auto_on.get():
+            self._fetch_realtime()
+
+    def _cancel_schedule(self):
+        if self._rt_after_id:
+            self.frame.after_cancel(self._rt_after_id)
+            self._rt_after_id = None
