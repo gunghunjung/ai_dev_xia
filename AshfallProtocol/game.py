@@ -1,3 +1,4 @@
+import math
 import random
 import pygame
 from asset_loader import AssetLoader
@@ -5,9 +6,20 @@ from config import (BG_COLOR, CAMERA_LERP, FPS, GRID_COLOR, HEIGHT,
                     RUBBLE_COLOR, TITLE, WAVE_BREAK_TIME, WIDTH,
                     WORLD_HEIGHT, WORLD_WIDTH, vec)
 from effects import EffectManager
-from enemy import EnemySpawner, Barrel, DropItem, BossEnemy
+from enemy import (EnemySpawner, Barrel, DropItem, BossEnemy,
+                   SuicideEnemy, SupportEnemy, EliteRunner)
 from player import Player
 from ui import UI
+
+
+# trait 값 상수 (weapon.py 순환참조 없이)
+_TRAIT_EXPLOSIVE = 'explosive'
+_TRAIT_SHOCK     = 'shock'
+_TRAIT_PIERCE    = 'pierce'
+
+EXPLOSIVE_RADIUS = 80
+EXPLOSIVE_DAMAGE = 40
+SHOCK_RADIUS     = 120
 
 
 class Camera:
@@ -32,7 +44,6 @@ class Camera:
 # ── 맵 장애물 ──────────────────────────────────────────────────────────────
 
 OBSTACLE_DEFS = [
-    # (x, y, w, h)
     (340,  270,  220, 90),
     (780,  190,  130, 220),
     (1260, 510,  260, 110),
@@ -130,6 +141,16 @@ class Game:
                         self.player.switch_weapon(1)
                     elif event.key == pygame.K_3:
                         self.player.switch_weapon(2)
+                    elif event.key == pygame.K_4:
+                        self.player.switch_weapon(3)
+                    elif event.key == pygame.K_5:
+                        self.player.switch_weapon(4)
+                    elif event.key == pygame.K_6:
+                        self.player.switch_weapon(5)
+                    elif event.key == pygame.K_7:
+                        self.player.switch_weapon(6)
+                    elif event.key == pygame.K_8:
+                        self.player.switch_weapon(7)
 
                 elif event.key == pygame.K_RETURN and self.player.dead:
                     self.restart()
@@ -149,16 +170,17 @@ class Game:
         mouse_world = self.camera.screen_to_world(pygame.mouse.get_pos())
         self.player.update(dt, self._input_state(), mouse_world, self.obstacles)
 
-        # 자동 재장전
-        if self.player.weapon.ammo <= 0 and not self.player.weapon.is_reloading:
-            self.player.weapon.begin_reload()
+        # 자동 재장전 (non-heat 무기만)
+        w = self.player.weapon
+        if not w.stats.heat_based and w.ammo <= 0 and not w.is_reloading:
+            w.begin_reload()
 
         # 사격
         if pygame.mouse.get_pressed()[0]:
-            new_bullets = self.player.weapon.try_fire(self.player.pos, self.player.aim_dir)
+            new_bullets = w.try_fire(self.player.pos, self.player.aim_dir)
             if new_bullets:
                 self.bullets.extend(new_bullets)
-                self.effects.add_shake(self.player.weapon.stats.recoil, 0.06)
+                self.effects.add_shake(w.stats.recoil, 0.06)
 
         # 웨이브 클리어 알림
         if self.spawner.wave != self.prev_wave:
@@ -175,8 +197,9 @@ class Game:
 
         # 적 업데이트
         for e in self.enemies:
-            e.update(dt, self.player, self.obstacles, self.bullets)
-            if e.try_attack(self.player):
+            allies = self.enemies if isinstance(e, SupportEnemy) else None
+            e.update(dt, self.player, self.obstacles, self.bullets, allies)
+            if not e.dead and e.try_attack(self.player):
                 if self.player.take_damage(e.damage):
                     self.effects.spawn_hit(self.player.pos, (200, 230, 255), 12)
                     self.effects.add_shake(9.0, 0.16)
@@ -203,48 +226,109 @@ class Game:
             br = pygame.Rect(int(bullet.pos.x - bullet.radius),
                              int(bullet.pos.y - bullet.radius),
                              bullet.radius * 2, bullet.radius * 2)
-            # 장애물 충돌
+
+            # 장애물 충돌 (EXPLOSIVE는 장애물에 맞아도 폭발)
             if any(br.colliderect(ob) for ob in self.obstacles):
+                if bullet.trait is not None and \
+                   bullet.trait.type.value == _TRAIT_EXPLOSIVE:
+                    self._trigger_explosion(bullet.pos)
                 bullet.dead = True
                 self.effects.spawn_hit(bullet.pos, (140, 130, 120), 4)
                 continue
 
             if bullet.owner == 'player':
-                # 적 충돌
                 for enemy in self.enemies:
                     if enemy.dead:
+                        continue
+                    # 관통 총알 중복 히트 방지
+                    if id(enemy) in bullet.hit_enemies:
                         continue
                     if bullet.pos.distance_to(enemy.pos) <= bullet.radius + enemy.radius:
                         enemy.take_damage(bullet.damage, bullet.velocity)
                         self.effects.spawn_hit(bullet.pos)
                         self.effects.add_damage_text(bullet.damage, enemy.pos)
                         self.effects.add_shake(3.0, 0.04)
-                        bullet.dead = True
-                        break
+
+                        # ── Trait 처리 ──────────────────────────────────
+                        if bullet.trait is not None:
+                            tval = bullet.trait.type.value
+
+                            # 상태이상 (FIRE / ICE / BLEED)
+                            if tval in ('fire', 'ice', 'bleed'):
+                                enemy.apply_status(bullet.trait)
+
+                            # SHOCK: 주변 1명에게 체인
+                            elif tval == _TRAIT_SHOCK:
+                                self._trigger_shock(bullet, enemy)
+
+                            # EXPLOSIVE: 범위 폭발
+                            elif tval == _TRAIT_EXPLOSIVE:
+                                self._trigger_explosion(bullet.pos)
+                                # EXPLOSIVE는 관통 없이 즉시 사망
+                                bullet.hit_enemies.add(id(enemy))
+                                bullet.dead = True
+                                break
+
+                        # 관통 처리
+                        if bullet.pierce:
+                            bullet.hit_enemies.add(id(enemy))
+                            # dead = False 유지 → 계속 진행
+                        else:
+                            bullet.dead = True
+                            break
+
             elif bullet.owner == 'enemy':
-                # 플레이어 충돌
-                if bullet.pos.distance_to(self.player.pos) <= bullet.radius + self.player.radius:
+                if bullet.pos.distance_to(self.player.pos) <= \
+                   bullet.radius + self.player.radius:
                     if self.player.take_damage(bullet.damage):
                         self.effects.spawn_hit(self.player.pos, (200, 230, 255), 8)
                         self.effects.add_shake(6.0, 0.10)
                     bullet.dead = True
 
+    def _trigger_explosion(self, center_pos):
+        """EXPLOSIVE trait 폭발 처리"""
+        self.effects.spawn_explosion(center_pos)
+        self.effects.add_shake(10.0, 0.20)
+        for enemy in self.enemies:
+            if enemy.dead:
+                continue
+            if enemy.pos.distance_to(center_pos) <= EXPLOSIVE_RADIUS:
+                enemy.take_damage(EXPLOSIVE_DAMAGE,
+                                  enemy.pos - center_pos)
+                self.effects.add_damage_text(EXPLOSIVE_DAMAGE, enemy.pos)
+        # 플레이어 폭발 피해 없음 (플레이어 총알이므로)
+
+    def _trigger_shock(self, bullet, hit_enemy):
+        """SHOCK trait 체인 처리 — 주변 120 반경 내 다른 적 1명"""
+        chain_damage = int(bullet.damage * 0.5)
+        closest = None
+        closest_dist = SHOCK_RADIUS + 1
+        for other in self.enemies:
+            if other is hit_enemy or other.dead:
+                continue
+            d = hit_enemy.pos.distance_to(other.pos)
+            if d <= SHOCK_RADIUS and d < closest_dist:
+                closest_dist = d
+                closest = other
+        if closest is not None:
+            closest.take_damage(chain_damage)
+            self.effects.add_damage_text(chain_damage, closest.pos)
+            # 체인 이펙트 (파티클)
+            self.effects.spawn_hit(closest.pos, (200, 180, 255), 5)
+
     def _resolve_barrel_hits(self):
         for barrel in self.barrels:
             if barrel.dead:
                 continue
-            # 총알 충돌
             for bullet in self.bullets:
                 if bullet.dead:
                     continue
                 if bullet.pos.distance_to(barrel.pos) <= bullet.radius + barrel.radius:
                     barrel.take_damage(bullet.damage)
                     bullet.dead = True
-            # 폭발
             if barrel.exploded:
                 self.effects.spawn_explosion(barrel.pos)
                 self.effects.add_shake(15.0, 0.28)
-                # 범위 데미지
                 for enemy in self.enemies:
                     if enemy.pos.distance_to(barrel.pos) <= 100:
                         enemy.take_damage(60, enemy.pos - barrel.pos)
@@ -266,6 +350,11 @@ class Game:
                 self.kills += 1
                 self.score += enemy.score
                 self.effects.spawn_death(enemy.pos, enemy.color)
+
+                # SuicideEnemy 폭발 처리
+                if isinstance(enemy, SuicideEnemy) and enemy.exploded:
+                    self._trigger_suicide_explosion(enemy)
+
                 # 아이템 드랍
                 r = random.random()
                 if r < 0.15:
@@ -276,11 +365,27 @@ class Game:
                 alive.append(enemy)
         self.enemies = alive
 
+    def _trigger_suicide_explosion(self, enemy):
+        """SuicideEnemy 폭발: 반경 90 내 플레이어에게 45 데미지"""
+        EXPLODE_RADIUS = 90
+        EXPLODE_DAMAGE = 45
+        self.effects.spawn_explosion(enemy.pos)
+        self.effects.add_shake(14.0, 0.25)
+        if self.player.pos.distance_to(enemy.pos) <= EXPLODE_RADIUS:
+            if self.player.take_damage(EXPLODE_DAMAGE):
+                self.effects.spawn_hit(self.player.pos, (255, 160, 60), 14)
+                self.effects.add_shake(12.0, 0.22)
+        # 주변 적들도 폭발 피해 (연쇄)
+        for other in self.enemies:
+            if other is enemy or other.dead:
+                continue
+            if other.pos.distance_to(enemy.pos) <= EXPLODE_RADIUS:
+                other.take_damage(20, other.pos - enemy.pos)
+
     # ── 렌더링 ────────────────────────────────────────────────────────────
 
     def _draw_background(self):
         self.screen.fill(BG_COLOR)
-        # 그리드
         grid = 64
         ox = int(self.camera.offset.x // grid) * grid
         oy = int(self.camera.offset.y // grid) * grid
@@ -290,40 +395,30 @@ class Game:
         for y in range(oy, int(self.camera.offset.y + HEIGHT) + grid, grid):
             sy = y - self.camera.offset.y
             pygame.draw.line(self.screen, GRID_COLOR, (0, sy), (WIDTH, sy))
-        # 장식 잔해 (원형 크레이터)
         for (x, y) in DECOR_POINTS:
             pos = self.camera.world_to_screen(vec(x, y))
             if -60 < pos[0] < WIDTH+60 and -60 < pos[1] < HEIGHT+60:
                 pygame.draw.circle(self.screen, (44, 40, 36), pos, 32)
                 pygame.draw.circle(self.screen, (60, 54, 46), pos, 14)
-        # 장애물
         for ob in self.obstacles:
             r = pygame.Rect(ob.x - self.camera.offset.x, ob.y - self.camera.offset.y,
                             ob.width, ob.height)
             pygame.draw.rect(self.screen, RUBBLE_COLOR, r, border_radius=8)
             pygame.draw.rect(self.screen, (85, 78, 70), r, 3, border_radius=8)
-            # 그림자 느낌 하이라이트
             pygame.draw.line(self.screen, (90, 85, 78),
                              (r.left+4, r.top+3), (r.right-4, r.top+3), 2)
 
     def _draw(self):
         self._draw_background()
-        # 드럼통
         for barrel in self.barrels:
             barrel.draw(self.screen, self.camera)
-        # 아이템
         for item in self.items:
             item.draw(self.screen, self.camera)
-        # 총알
         for b in self.bullets:
             b.draw(self.screen, self.camera)
-        # 적
         for e in self.enemies:
             e.draw(self.screen, self.camera)
-        # 플레이어
         self.player.draw(self.screen, self.camera)
-        # 이펙트
         self.effects.draw(self.screen, self.camera, self.small_font)
-        # UI
         self.ui.draw(self.screen, self)
         pygame.display.flip()
