@@ -1,0 +1,40 @@
+{
+  "infected": {
+    "name": "감염자", "kind": "hostile", "hp": 40, "speed": 1.5, "chase_speed": 2.2, "night_speed_mult": 1.25,
+    "damage": 9, "attack_range": 0.95, "attack_windup": 0.45, "attack_cooldown": 1.3,
+    "sight": 7.0, "hearing": 1.0, "flee_hp": 0.0, "radius": 0.32, "mass": 1.0,
+    "bleed_chance": 0.2, "infect_chance": 0.35, "infect_amount": 12,
+    "look": {"body": [96, 120, 92], "skin": [150, 170, 120], "accent": [70, 50, 50], "height": 1.0, "shape": "human", "hunch": 0.35},
+    "sound": "groan", "drops": [["cloth", 0.35, 1, 1], ["scrap_metal", 0.12, 1, 1], ["bandage", 0.05, 1, 1]]
+  },
+  "mutant_hound": {
+    "name": "돌연변이 들개", "kind": "hostile", "hp": 28, "speed": 2.2, "chase_speed": 4.4, "night_speed_mult": 1.1,
+    "damage": 7, "attack_range": 0.9, "attack_windup": 0.3, "attack_cooldown": 0.9,
+    "sight": 9.0, "hearing": 1.4, "flee_hp": 0.3, "radius": 0.3, "mass": 0.7,
+    "bleed_chance": 0.35, "infect_chance": 0.1, "infect_amount": 8,
+    "look": {"body": [120, 86, 70], "skin": [160, 110, 90], "accent": [200, 60, 60], "height": 0.55, "shape": "beast"},
+    "sound": "snarl", "drops": [["raw_meat", 0.9, 1, 2]]
+  },
+  "raider": {
+    "name": "약탈자", "kind": "hostile", "hp": 60, "speed": 1.8, "chase_speed": 2.8, "night_speed_mult": 1.0,
+    "damage": 13, "attack_range": 1.25, "attack_windup": 0.5, "attack_cooldown": 1.4,
+    "sight": 10.0, "hearing": 1.1, "flee_hp": 0.25, "radius": 0.33, "mass": 1.2,
+    "bleed_chance": 0.25, "infect_chance": 0.0, "infect_amount": 0,
+    "look": {"body": [70, 64, 60], "skin": [200, 160, 130], "accent": [170, 50, 40], "height": 1.05, "shape": "human", "hunch": 0.0, "weapon": "pipe"},
+    "sound": "shout", "drops": [["ammo_9mm", 0.25, 1, 3], ["cloth", 0.5, 1, 2], ["canned_food", 0.15, 1, 1], ["pipe", 0.08, 1, 1], ["bandage", 0.2, 1, 1]]
+  },
+  "hare": {
+    "name": "황무지 토끼", "kind": "wildlife", "hp": 8, "speed": 1.2, "chase_speed": 4.6, "night_speed_mult": 1.0,
+    "damage": 0, "attack_range": 0, "attack_windup": 0, "attack_cooldown": 1,
+    "sight": 6.0, "hearing": 1.6, "flee_hp": 1.0, "radius": 0.2, "mass": 0.3,
+    "look": {"body": [176, 150, 116], "skin": [210, 190, 160], "accent": [240, 230, 220], "height": 0.35, "shape": "small"},
+    "sound": "squeak", "drops": [["raw_meat", 1.0, 1, 1]]
+  },
+  "spawn_tables": {
+    "wasteland":    {"day": [["infected", 6], ["hare", 5], ["mutant_hound", 1]], "night": [["infected", 8], ["mutant_hound", 3]], "density": 0.0011},
+    "ruins":        {"day": [["infected", 8], ["raider", 2]], "night": [["infected", 10], ["raider", 2], ["mutant_hound", 2]], "density": 0.0026},
+    "gas_station":  {"day": [["raider", 3], ["infected", 4]], "night": [["infected", 6], ["raider", 3]], "density": 0.0030},
+    "military":     {"day": [["raider", 5], ["infected", 4]], "night": [["raider", 5], ["infected", 6], ["mutant_hound", 3]], "density": 0.0035},
+    "contaminated": {"day": [["infected", 6], ["mutant_hound", 4]], "night": [["infected", 9], ["mutant_hound", 5]], "density": 0.0032}
+  }
+}

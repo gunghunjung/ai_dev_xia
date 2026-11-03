@@ -1,0 +1,20 @@
+[
+  {"id": "stick",          "result": ["stick", 1],          "ingredients": [["branch", 2]],                                           "station": null,        "time": 1.0},
+  {"id": "stone_axe",      "result": ["stone_axe", 1],      "ingredients": [["stone", 2], ["branch", 1], ["plant_fiber", 2]],         "station": null,        "time": 2.0},
+  {"id": "crude_shovel",   "result": ["crude_shovel", 1],   "ingredients": [["stone", 2], ["branch", 2], ["plant_fiber", 2]],         "station": null,        "time": 2.0},
+  {"id": "bandage_fiber",  "result": ["bandage", 1],        "ingredients": [["plant_fiber", 4]],                                      "station": null,        "time": 1.2},
+  {"id": "bandage_cloth",  "result": ["bandage", 2],        "ingredients": [["cloth", 1]],                                            "station": null,        "time": 1.0},
+  {"id": "campfire",       "result": ["campfire", 1],       "ingredients": [["stone", 5], ["branch", 3]],                             "station": null,        "time": 2.5},
+  {"id": "bedroll",        "result": ["bedroll", 1],        "ingredients": [["plant_fiber", 6], ["cloth", 2]],                        "station": null,        "time": 2.5},
+  {"id": "storage_box",    "result": ["storage_box", 1],    "ingredients": [["wood", 4], ["branch", 2]],                              "station": null,        "time": 3.0},
+  {"id": "workbench",      "result": ["workbench", 1],      "ingredients": [["wood", 5], ["stone", 4], ["scrap_metal", 2]],           "station": null,        "time": 4.0},
+  {"id": "barricade",      "result": ["barricade", 1],      "ingredients": [["wood", 3], ["branch", 4], ["plant_fiber", 2]],          "station": "workbench", "time": 3.0},
+  {"id": "water_purifier", "result": ["water_purifier", 1], "ingredients": [["scrap_metal", 3], ["plastic", 2], ["cloth", 2], ["empty_bottle", 1]], "station": "workbench", "time": 4.0},
+  {"id": "shovel",         "result": ["shovel", 1],         "ingredients": [["scrap_metal", 3], ["wood", 2]],                         "station": "workbench", "time": 3.5},
+  {"id": "knife",          "result": ["knife", 1],          "ingredients": [["scrap_metal", 2], ["cloth", 1]],                        "station": "workbench", "time": 3.0},
+  {"id": "axe",            "result": ["axe", 1],            "ingredients": [["iron_plate", 1], ["wood", 2], ["scrap_metal", 1]],      "station": "workbench", "time": 4.0},
+  {"id": "boil_water",     "result": ["clean_water", 1],    "ingredients": [["dirty_water", 1]],                                      "station": "campfire",  "time": 3.0},
+  {"id": "cook_meat",      "result": ["cooked_meat", 1],    "ingredients": [["raw_meat", 1]],                                         "station": "campfire",  "time": 3.0},
+  {"id": "purify_water",   "result": ["clean_water", 2],    "ingredients": [["dirty_water", 2]],                                      "station": "water_purifier", "time": 2.0},
+  {"id": "antiseptic",     "result": ["antiseptic", 1],     "ingredients": [["clean_water", 1], ["wild_plant", 2]],                   "station": "campfire",  "time": 4.0}
+]

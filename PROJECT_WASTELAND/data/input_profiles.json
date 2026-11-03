@@ -1,0 +1,38 @@
+{
+  "_comment": "Physical gamepad layouts. Game code never uses these numbers directly: it uses logical actions bound in settings.",
+  "gamepad_layouts": {
+    "xinput": {
+      "match": ["xbox", "xinput", "x-box", "controller (xbox", "microsoft"],
+      "buttons": {"A": 0, "B": 1, "X": 2, "Y": 3, "LB": 4, "RB": 5, "VIEW": 6, "MENU": 7, "L3": 8, "R3": 9, "GUIDE": 10},
+      "axes": {"LX": 0, "LY": 1, "RX": 2, "RY": 3, "LT": 4, "RT": 5},
+      "hat": 0
+    }
+  },
+  "default_layout": "xinput",
+  "default_bindings": {
+    "keyboard": {
+      "move_up": ["K_w", "K_UP"], "move_down": ["K_s", "K_DOWN"], "move_left": ["K_a", "K_LEFT"], "move_right": ["K_d", "K_RIGHT"],
+      "attack": ["MOUSE_1"], "aim": ["MOUSE_3"], "melee": ["K_v"], "reload": ["K_r"], "interact": ["K_e"], "dig": ["K_f"],
+      "inventory": ["K_i", "K_TAB"], "crafting": ["K_c"], "sprint": ["K_LSHIFT"], "dodge": ["K_SPACE"], "switch_weapon": ["K_q"],
+      "slot_1": ["K_1"], "slot_2": ["K_2"], "slot_3": ["K_3"], "slot_4": ["K_4"], "slot_5": ["K_5"],
+      "pause": ["K_ESCAPE"], "quicksave": ["K_F5"], "quickload": ["K_F9"], "debug": ["K_F3"],
+      "ui_up": ["K_w", "K_UP"], "ui_down": ["K_s", "K_DOWN"], "ui_left": ["K_a", "K_LEFT"], "ui_right": ["K_d", "K_RIGHT"],
+      "ui_confirm": ["K_RETURN", "K_SPACE"], "ui_back": ["K_ESCAPE"], "ui_menu": ["K_x"], "ui_split": ["K_z"],
+      "ui_tab_prev": ["K_q"], "ui_tab_next": ["K_e"]
+    },
+    "gamepad": {
+      "move": "LSTICK", "aim_stick": "RSTICK",
+      "attack": ["RT"], "aim": ["LT"], "melee": ["RB"], "dodge": ["LB", "B"], "interact": ["A"], "tool": ["X"],
+      "switch_weapon": ["Y"], "inventory": ["VIEW"], "pause": ["MENU"], "sprint": ["L3"], "aim_assist_toggle": ["R3"],
+      "slot_1": ["DPAD_UP"], "slot_2": ["DPAD_RIGHT"], "slot_3": ["DPAD_DOWN"], "slot_4": ["DPAD_LEFT"],
+      "ui_up": ["DPAD_UP", "LS_UP"], "ui_down": ["DPAD_DOWN", "LS_DOWN"], "ui_left": ["DPAD_LEFT", "LS_LEFT"], "ui_right": ["DPAD_RIGHT", "LS_RIGHT"],
+      "ui_confirm": ["A"], "ui_back": ["B"], "ui_menu": ["Y"], "ui_split": ["X"], "ui_tab_prev": ["LB"], "ui_tab_next": ["RB"]
+    }
+  },
+  "rebindable": ["attack", "aim", "melee", "reload", "interact", "dig", "tool", "inventory", "crafting", "sprint", "dodge", "switch_weapon", "slot_1", "slot_2", "slot_3", "slot_4", "slot_5"],
+  "action_names": {
+    "attack": "공격 / 사격", "aim": "조준", "melee": "근접 공격", "reload": "재장전", "interact": "상호작용", "dig": "발굴",
+    "tool": "재장전 / 도구 사용", "inventory": "인벤토리", "crafting": "제작", "sprint": "달리기", "dodge": "회피",
+    "switch_weapon": "무기 전환", "slot_1": "퀵슬롯 1", "slot_2": "퀵슬롯 2", "slot_3": "퀵슬롯 3", "slot_4": "퀵슬롯 4", "slot_5": "퀵슬롯 5"
+  }
+}

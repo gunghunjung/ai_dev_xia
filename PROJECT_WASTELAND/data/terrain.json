@@ -1,0 +1,33 @@
+{
+  "hand_digging": {"dig_power": 0.35, "max_depth": 1, "soft_only": true},
+  "layers": [
+    {"depth": 1, "name": "얕은 지층", "work": 2.4, "time_mult": 1.0},
+    {"depth": 2, "name": "중간 지층", "work": 4.2, "time_mult": 1.25},
+    {"depth": 3, "name": "깊은 지층", "work": 6.5, "time_mult": 1.5}
+  ],
+  "terrain_types": [
+    {"id": "sand",     "name": "모래",     "hardness": 0.7, "diggable": true,  "soft": true,  "max_depth": 3, "color": [214, 186, 132], "accent": [190, 160, 108], "speed": 0.95},
+    {"id": "dirt",     "name": "마른 흙",  "hardness": 1.0, "diggable": true,  "soft": true,  "max_depth": 3, "color": [168, 132, 92],  "accent": [140, 106, 72],  "speed": 1.0},
+    {"id": "clay",     "name": "점토",     "hardness": 1.4, "diggable": true,  "soft": false, "max_depth": 3, "color": [176, 114, 82],  "accent": [150, 92, 64],   "speed": 0.95, "bonus": ["clay", 0.5]},
+    {"id": "gravel",   "name": "자갈",     "hardness": 1.7, "diggable": true,  "soft": false, "max_depth": 2, "color": [164, 150, 128], "accent": [138, 126, 108], "speed": 1.0, "bonus": ["stone", 0.6]},
+    {"id": "rock",     "name": "암반",     "hardness": 9.0, "diggable": false, "soft": false, "max_depth": 0, "color": [146, 134, 120], "accent": [124, 114, 102],    "speed": 1.0},
+    {"id": "asphalt",  "name": "아스팔트", "hardness": 2.6, "diggable": true,  "soft": false, "max_depth": 3, "min_power": 0.9, "color": [92, 90, 92], "accent": [76, 74, 76], "speed": 1.08},
+    {"id": "concrete", "name": "콘크리트", "hardness": 9.0, "diggable": false, "soft": false, "max_depth": 0, "color": [150, 150, 146], "accent": [126, 126, 122], "speed": 1.08},
+    {"id": "rubble",   "name": "잔해",     "hardness": 1.5, "diggable": true,  "soft": false, "max_depth": 3, "color": [132, 122, 114], "accent": [104, 96, 90],   "speed": 0.85, "bonus": ["scrap_metal", 0.25]},
+    {"id": "toxic",    "name": "오염토",   "hardness": 1.1, "diggable": true,  "soft": true,  "max_depth": 3, "color": [124, 140, 72],  "accent": [96, 118, 52],   "speed": 0.95, "contaminated": true},
+    {"id": "dry_grass","name": "마른 풀밭","hardness": 0.9, "diggable": true,  "soft": true,  "max_depth": 3, "color": [176, 162, 96],  "accent": [146, 134, 70],  "speed": 0.97, "bonus": ["plant_fiber", 0.4]}
+  ],
+  "regions": {
+    "wasteland":    {"name": "황무지",     "terrain": [["sand", 0.30], ["dirt", 0.30], ["dry_grass", 0.20], ["clay", 0.12], ["gravel", 0.08]], "rock_threshold": 0.80, "cache_chance": 0.010, "cache_depth": 2, "temp": 0,  "danger": 1.0},
+    "ruins":        {"name": "폐허 도시",  "terrain": [["rubble", 0.40], ["asphalt", 0.25], ["dirt", 0.20], ["concrete", 0.15]], "rock_threshold": 2.0, "cache_chance": 0.028, "cache_depth": 2, "temp": 1, "danger": 1.6},
+    "gas_station":  {"name": "주유소",     "terrain": [["asphalt", 0.55], ["concrete", 0.20], ["gravel", 0.25]], "rock_threshold": 2.0, "cache_chance": 0.03, "cache_depth": 2, "temp": 1, "danger": 1.3},
+    "military":     {"name": "군사시설",   "terrain": [["dirt", 0.40], ["concrete", 0.25], ["gravel", 0.35]], "rock_threshold": 2.0, "cache_chance": 0.05, "cache_depth": 3, "temp": -1, "danger": 2.2},
+    "contaminated": {"name": "오염 지역",  "terrain": [["toxic", 0.75], ["dirt", 0.15], ["rubble", 0.10]], "rock_threshold": 0.85, "cache_chance": 0.03, "cache_depth": 3, "temp": 2, "danger": 2.0, "contamination": 1.0}
+  },
+  "landmarks": [
+    {"region": "ruins",        "radius": [15, 19], "min_dist": 30, "max_dist": 48},
+    {"region": "gas_station",  "radius": [6, 8],   "min_dist": 18, "max_dist": 28},
+    {"region": "military",     "radius": [11, 13], "min_dist": 50, "max_dist": 62},
+    {"region": "contaminated", "radius": [13, 16], "min_dist": 42, "max_dist": 60}
+  ]
+}
